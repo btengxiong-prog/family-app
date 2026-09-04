@@ -9,9 +9,9 @@
 
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ໃຊ້ຄ່າ Config ແທ້ຂອງທ່ານທີ່ສົ່ງມາກ່ອນໜ້ານີ້
+    // ຄ່າ Config ຂອງ Firebase ຂອງທ່ານ
     const firebaseConfig = {
         apiKey: "AIzaSyAfCkGyXVHF6uBUEmRYG9BOPdHHsmiwfio",
         authDomain: "familyapp-1d5ad.firebaseapp.com",
@@ -31,6 +31,7 @@
     window.dbRef = ref;
     window.dbSet = set;
     window.dbOnValue = onValue;
+    window.dbGet = get; // ເພີ່ມ get ສຳລັບກວດສອບຂໍ້ມູນຄັ້ງທຳອິດ
     </script>
 
     <style>
@@ -376,7 +377,6 @@
         // ລະບົບເຂົ້າສູ່ລະບົບ ແລະ ສິດທິການນຳໃຊ້ (Login & Roles)
         // ==========================================
         
-        // ກົດປຸ່ມ Enter ໃນຊ່ອງລະຫັດຜ່ານເພື່ອລັອກອິນ
         document.getElementById('loginPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') handleLogin();
         });
@@ -416,6 +416,7 @@
                 document.getElementById('userRole').style.background = '#E5E7EB';
             }
             
+            // ເມື່ອເຂົ້າສູ່ລະບົບສຳເລັດຈຶ່ງດຶງຂໍ້ມູນຈາກ Firebase
             loadTableData();
             updateReportOptions();
         }
@@ -437,6 +438,21 @@
                 document.getElementById('appContainer').style.display = 'none';
             }
         };
+
+        // ==========================================
+        // ຟັງຊັນບັນທຶກຂໍ້ມູນລົງ Firebase
+        // ==========================================
+        function saveDataToFirebase(type) {
+            if (type === 'import') {
+                const html = document.getElementById('importTableBody').innerHTML;
+                window.dbSet(window.dbRef(window.db, 'family_data/import'), html);
+                localStorage.setItem('family_import_data', html); // ແບັກອັບລົງເຄື່ອງໄວ້ນຳ
+            } else {
+                const html = document.getElementById('exportTableBody').innerHTML;
+                window.dbSet(window.dbRef(window.db, 'family_data/export'), html);
+                localStorage.setItem('family_export_data', html); // ແບັກອັບລົງເຄື່ອງໄວ້ນຳ
+            }
+        }
 
         // ==========================================
         // ລະບົບປ໋ອບອັບ (Custom Dialog)
@@ -480,26 +496,50 @@
             btnElement.classList.add('active');
         }
 
+        // ==========================================
+        // ດຶງຂໍ້ມູນອອນລາຍ ແລະ ຍ້າຍຂໍ້ມູນຈາກ Local (Auto-Migration)
+        // ==========================================
         function loadTableData() {
-            const savedImport = localStorage.getItem('family_import_data');
-            if (savedImport) {
-                document.getElementById('importTableBody').innerHTML = savedImport;
-                fixOldDataMissingCheckboxes('importTableBody', 'import');
-                sortTableByDateDescending('import'); 
-                updateTotalSum();
-            }
+            // 1. ກວດສອບຖ້າ Firebase ຫວ່າງເປົ່າ ແຕ່ໃນເຄື່ອງມີຂໍ້ມູນເກົ່າ ໃຫ້ດັນຂຶ້ນໄປ
+            window.dbGet(window.dbRef(window.db, 'family_data/import')).then((snapshot) => {
+                if (!snapshot.exists()) {
+                    const localData = localStorage.getItem('family_import_data');
+                    if (localData) window.dbSet(window.dbRef(window.db, 'family_data/import'), localData);
+                }
+            });
+            window.dbGet(window.dbRef(window.db, 'family_data/export')).then((snapshot) => {
+                if (!snapshot.exists()) {
+                    const localData = localStorage.getItem('family_export_data');
+                    if (localData) window.dbSet(window.dbRef(window.db, 'family_data/export'), localData);
+                }
+            });
+
+            // 2. ດຶງຂໍ້ມູນ ນຳເຂົ້າ ຈາກ Firebase (Realtime)
+            window.dbOnValue(window.dbRef(window.db, 'family_data/import'), (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('importTableBody').innerHTML = data;
+                    fixOldDataMissingCheckboxes('importTableBody', 'import', false); // ບໍ່ຕ້ອງ Save ຊ້ຳ
+                    sortTableByDateDescending('import'); 
+                    updateTotalSum();
+                }
+            });
+
+            // 3. ດຶງຂໍ້ມູນ ນຳອອກ ຈາກ Firebase (Realtime)
+            window.dbOnValue(window.dbRef(window.db, 'family_data/export'), (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('exportTableBody').innerHTML = data;
+                    fixOldDataMissingCheckboxes('exportTableBody', 'export', false); // ບໍ່ຕ້ອງ Save ຊ້ຳ
+                    sortTableByDateDescending('export'); 
+                    updateTotalSumExport();
+                }
+            });
             
-            const savedExport = localStorage.getItem('family_export_data');
-            if (savedExport) {
-                document.getElementById('exportTableBody').innerHTML = savedExport;
-                fixOldDataMissingCheckboxes('exportTableBody', 'export');
-                sortTableByDateDescending('export'); 
-                updateTotalSumExport();
-            }
             uncheckAllBoxes();
         }
 
-        function fixOldDataMissingCheckboxes(tableBodyId, type) {
+        function fixOldDataMissingCheckboxes(tableBodyId, type, shouldSave = true) {
             const tableBody = document.getElementById(tableBodyId);
             let isModified = false;
             const rows = tableBody.querySelectorAll('tr');
@@ -507,7 +547,7 @@
             rows.forEach(row => {
                 if (row.children.length === 9) {
                     const td = document.createElement('td');
-                    td.className = 'admin-cell'; // ເພີ່ມ class ເພື່ອໃຫ້ເຊື່ອງໄດ້
+                    td.className = 'admin-cell'; 
                     td.innerHTML = '<input type="checkbox" class="row-checkbox">';
                     row.appendChild(td);
                     isModified = true;
@@ -520,9 +560,8 @@
                 }
             });
 
-            if (isModified) {
-                if (type === 'import') localStorage.setItem('family_import_data', tableBody.innerHTML);
-                else localStorage.setItem('family_export_data', tableBody.innerHTML);
+            if (isModified && shouldSave) {
+                saveDataToFirebase(type);
             }
         }
 
@@ -625,8 +664,8 @@
 
                     sortTableByDateDescending(type);
 
-                    if (type === 'import') localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
-                    else localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
+                    // ປ່ຽນຈາກ LocalStorage ມາໃຊ້ Firebase
+                    saveDataToFirebase(type);
 
                     customAlert('ສຳເລັດ', `ເພີ່ມຂໍ້ມູນໃໝ່ສຳເລັດ: ${importedCount} ລາຍການ\n(ຂ້າມຂໍ້ມູນທີ່ຊ້ຳກັນ: ${duplicateCount} ລາຍການ)`, 'alert');
                 } catch (error) {
@@ -782,11 +821,11 @@
                 if (type === 'import') {
                     addRowToTable(parsedData);
                     sortTableByDateDescending('import'); 
-                    localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
+                    saveDataToFirebase('import'); // ປ່ຽນມາໃຊ້ Firebase
                 } else {
                     addRowToTableExport(parsedData);
                     sortTableByDateDescending('export'); 
-                    localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
+                    saveDataToFirebase('export'); // ປ່ຽນມາໃຊ້ Firebase
                 }
                 
                 statusText.innerHTML = "<strong>ບັນທຶກສຳເລັດ ✅ (" + companyName + ")</strong>";
@@ -883,10 +922,10 @@
                 reindexRows(tableBodyId);
 
                 if (type === 'import') {
-                    localStorage.setItem('family_import_data', tableBody.innerHTML);
+                    saveDataToFirebase('import'); // ປ່ຽນມາໃຊ້ Firebase
                     updateTotalSum();
                 } else {
-                    localStorage.setItem('family_export_data', tableBody.innerHTML);
+                    saveDataToFirebase('export'); // ປ່ຽນມາໃຊ້ Firebase
                     updateTotalSumExport();
                 }
                 
