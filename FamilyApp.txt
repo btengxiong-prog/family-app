@@ -17,7 +17,19 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
     <title>Family App</title>
     <!-- ເພີ່ມ Library ສຳລັບອ່ານໄຟລ໌ Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase App ແລະ Realtime Database SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
+        /* ================= ລະບົບສິດທິ (Permissions) ================= */
+        .admin-only { display: none !important; }
+        body.is-admin .admin-only { display: flex !important; }
+        
+        /* ເຊື່ອງຄໍລຳ Checkbox ຖ້າບໍ່ແມ່ນ Admin */
+        body:not(.is-admin) .admin-cell { display: none !important; }
+        
         /* ================= CSS ຕົກແຕ່ງ (Styling) ================= */
         :root {
             --primary: #4F46E5;
@@ -27,7 +39,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             --card-bg: #FFFFFF;
             --border-color: #D1D5DB;
             --danger: #EF4444; 
-            --info: #3B82F6; /* ສີຟ້າສຳລັບປຸ່ມອັບໂຫຼດ */
+            --info: #3B82F6; 
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Times New Roman', 'Phetsarath OT', serif; }
@@ -37,7 +49,8 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         header { background-color: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .user-info { display: flex; align-items: center; gap: 10px; }
         .role-badge { background: #FFD700; color: #000; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
-        .test-toggle { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: 'Times New Roman', 'Phetsarath OT', serif; }
+        .btn-logout { background: rgba(239, 68, 68, 0.9); border: 1px solid white; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: 'Times New Roman', 'Phetsarath OT', serif; }
+        .btn-logout:hover { background: #DC2626; }
 
         /* ເມນູລຸ່ມ/ຂ້າງ (Navigation) */
         nav { display: flex; background: white; padding: 10px; gap: 10px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; }
@@ -66,8 +79,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         th, td { border: 1px solid var(--border-color); padding: 10px; text-align: center; font-size: 14px; }
         th { background-color: #F9FAFB; font-weight: bold; }
         tfoot td { font-weight: bold; background-color: #F9FAFB; }
-        .admin-only { display: none; }
-        body.is-admin .admin-only { display: block; }
         input[type="checkbox"] { transform: scale(1.3); cursor: pointer; }
 
         /* ================= ປ໋ອບອັບ (Custom Modal) ================= */
@@ -86,268 +97,403 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         .btn-modal-confirm:hover { background: #DC2626; }
     </style>
 </head>
-<body class="is-admin">
+<body>
 
-    <!-- ປ໋ອບອັບ Custom Modal -->
-    <div id="customModal" class="modal-overlay">
-        <div class="modal-box">
-            <div id="modalIcon" class="modal-icon">⚠️</div>
-            <h3 id="modalTitle">ຢືນຢັນ</h3>
-            <p id="modalMessage">ຂໍ້ຄວາມແຈ້ງເຕືອນ</p>
-            <div class="modal-actions">
-                <button id="modalCancelBtn" class="modal-btn btn-modal-cancel">ຍົກເລີກ</button>
-                <button id="modalConfirmBtn" class="modal-btn btn-modal-confirm">ຕົກລົງ</button>
-            </div>
+    <!-- ໜ້າຈໍເຂົ້າສູ່ລະບົບ (Login Screen) -->
+    <div id="loginScreen" style="display: flex; height: 100vh; justify-content: center; align-items: center; background-color: var(--bg-color); width: 100%; position: absolute; top: 0; left: 0; z-index: 9999;">
+        <div class="card" style="width: 100%; max-width: 400px; text-align: center; padding: 40px 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <h2 style="margin-bottom: 10px; color: var(--primary); font-size: 28px;">🏠 FamilyApp</h2>
+            <p style="margin-bottom: 25px; color: #6B7280;">ກະລຸນາເຂົ້າສູ່ລະບົບເພື່ອສືບຕໍ່</p>
+            
+            <input type="text" id="loginUsername" placeholder="ຊື່ຜູ້ໃຊ້ (Username)" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 16px; font-family: inherit;">
+            <input type="password" id="loginPassword" placeholder="ລະຫັດຜ່ານ (Password)" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 16px; font-family: inherit;">
+            
+            <button class="btn-action" style="padding: 12px; font-size: 18px; width: 100%; font-weight: bold;" onclick="handleLogin()">ເຂົ້າສູ່ລະບົບ</button>
+            <p id="loginError" style="color: var(--danger); margin-top: 15px; display: none; font-weight: bold;">❌ ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ!</p>
         </div>
     </div>
 
-    <header>
-        <h2>🏠 FamilyApp</h2>
-        <div class="user-info">
-            <span id="userName">ສະບາຍດີ, ພໍ່</span>
-            <span class="role-badge" id="userRole">Admin</span>
-            <button class="test-toggle" onclick="toggleRole()">🔄 ປ່ຽນສິດທິ</button>
-        </div>
-    </header>
+    <!-- ຫຸ້ມແອັບທັງໝົດໄວ້ -->
+    <div id="appContainer" style="display: none;">
 
-    <nav>
-        <button class="tab-btn active" onclick="showSection('dashboard', this)">ໜ້າຫຼັກ</button>
-        <button class="tab-btn" onclick="showSection('wallet', this)">ກະເປົາເງິນ</button>
-        <button class="tab-btn" onclick="showSection('import', this)">ນຳເຂົ້າສິນຄ້າ</button>
-        <button class="tab-btn" onclick="showSection('export', this)">ນຳອອກສິນຄ້າ</button>
-        <button class="tab-btn" onclick="showSection('report', this)">ລາຍງານ</button>
-        <button class="tab-btn" onclick="showSection('notice', this)">ກະດານຂ່າວ</button>
-    </nav>
-
-    <main>
-<!-- 1. ໜ້າຫຼັກ (Dashboard) -->
-        <div id="dashboard" class="content-section active">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-size: 20px; color: var(--text-dark); border-left: 4px solid var(--primary); padding-left: 12px; margin: 0;">ພາບລວມວັນນີ້ (Dashboard)</h3>
+        <!-- ປ໋ອບອັບ Custom Modal -->
+        <div id="customModal" class="modal-overlay">
+            <div class="modal-box">
+                <div id="modalIcon" class="modal-icon">⚠️</div>
+                <h3 id="modalTitle">ຢືນຢັນ</h3>
+                <p id="modalMessage">ຂໍ້ຄວາມແຈ້ງເຕືອນ</p>
+                <div class="modal-actions">
+                    <button id="modalCancelBtn" class="modal-btn btn-modal-cancel">ຍົກເລີກ</button>
+                    <button id="modalConfirmBtn" class="modal-btn btn-modal-confirm">ຕົກລົງ</button>
+                </div>
             </div>
+        </div>
 
-            <div class="grid-container" style="margin-top: 0;">
-                <!-- ກ່ອງກະເປົາເງິນ ອອກແບບໃໝ່ແບບພຣີມຽມ -->
-                <div class="card" style="background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%); color: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border: none; position: relative; overflow: hidden; padding: 25px;">
-                    
-                    <!-- ລວດລາຍວົງມົນປະດັບພື້ນຫຼັງ -->
-                    <div style="position: absolute; top: -30px; right: -20px; width: 120px; height: 120px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
-                    <div style="position: absolute; bottom: -20px; right: 50px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
-                    
-                    <h3 style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 18px; margin-bottom: 20px; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 26px;">💰</span> ກະເປົາເງິນຄອບຄົວ
-                    </h3>
-                    
-                <!-- ຍອດເງິນ -->
-                    <div style="margin-bottom: 25px;">
-                        <p style="font-size: 14px; color: rgba(255,255,255,0.85); margin-bottom: 5px;">ຍອດເງິນຄົງເຫຼືອລວມ (ກີບ)</p>
-                        <!-- ເພີ່ມ id="dashboardTotalBalance" -->
-                        <h2 id="dashboardTotalBalance" style="font-size: 34px; margin: 0; text-shadow: 1px 2px 4px rgba(0,0,0,0.2); letter-spacing: 1px;">0</h2>
-                    </div>
+        <header>
+            <h2>🏠 FamilyApp</h2>
+            <div class="user-info">
+                <span id="userName">ສະບາຍດີ</span>
+                <span class="role-badge" id="userRole">Role</span>
+                <button class="btn-logout" onclick="handleLogout()">🚪 ອອກຈາກລະບົບ</button>
+            </div>
+        </header>
 
-                    <!-- ແຖບສະຫຼຸບລາຍຈ່າຍ -->
-                    <div style="background: rgba(0, 0, 0, 0.2); padding: 12px 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; backdrop-filter: blur(5px);">
-                        <span>📉 ລາຍຈ່າຍເດືອນນີ້:</span>
-                        <!-- ເພີ່ມ id="dashboardMonthlyExpense" -->
-                        <strong id="dashboardMonthlyExpense" style="color: #FFD700; font-size: 16px;">0 ກີບ</strong>
-                    </div>
+        <nav>
+            <button class="tab-btn active" onclick="showSection('dashboard', this)">ໜ້າຫຼັກ</button>
+            <button class="tab-btn" onclick="showSection('wallet', this)">ກະເປົາເງິນ</button>
+            <button class="tab-btn" onclick="showSection('import', this)">ນຳເຂົ້າສິນຄ້າ</button>
+            <button class="tab-btn" onclick="showSection('export', this)">ນຳອອກສິນຄ້າ</button>
+            <button class="tab-btn" onclick="showSection('report', this)">ລາຍງານ</button>
+            <button class="tab-btn" onclick="showSection('notice', this)">ກະດານຂ່າວ</button>
+        </nav>
 
-                    <!-- ປຸ່ມລາຍຮັບ-ລາຍຈ່າຍບັງເອີນ -->
-                    <div class="admin-only" style="margin-top: 25px; display: flex; flex-direction: column; gap: 12px;">
-                        <button class="btn-action" style="margin: 0; background: #10B981; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;">+ ລາຍຮັບບັງເອີນ</button>
-                        <button class="btn-action" style="margin: 0; background: #EF4444; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;">- ລາຍຈ່າຍບັງເອີນ</button>
+        <main>
+            <!-- 1. ໜ້າຫຼັກ (Dashboard) -->
+            <div id="dashboard" class="content-section active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 20px; color: var(--text-dark); border-left: 4px solid var(--primary); padding-left: 12px; margin: 0;">ພາບລວມວັນນີ້ (Dashboard)</h3>
+                </div>
+
+                <div class="grid-container" style="margin-top: 0;">
+                    <div class="card" style="background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%); color: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); border: none; position: relative; overflow: hidden; padding: 25px;">
+                        
+                        <div style="position: absolute; top: -30px; right: -20px; width: 120px; height: 120px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -20px; right: 50px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+                        
+                        <h3 style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 18px; margin-bottom: 20px; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 26px;">💰</span> ກະເປົາເງິນຄອບຄົວ
+                        </h3>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <p style="font-size: 14px; color: rgba(255,255,255,0.85); margin-bottom: 5px;">ຍອດເງິນຄົງເຫຼືອລວມ (ກີບ)</p>
+                            <h2 id="dashboardTotalBalance" style="font-size: 34px; margin: 0; text-shadow: 1px 2px 4px rgba(0,0,0,0.2); letter-spacing: 1px;">0</h2>
+                        </div>
+
+                        <div style="background: rgba(0, 0, 0, 0.2); padding: 12px 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; backdrop-filter: blur(5px);">
+                            <span>📉 ລາຍຈ່າຍເດືອນນີ້:</span>
+                            <strong id="dashboardMonthlyExpense" style="color: #FFD700; font-size: 16px;">0 ກີບ</strong>
+                        </div>
+
+                        <div class="admin-only" style="margin-top: 25px; display: flex; flex-direction: column; gap: 12px;">
+                            <button class="btn-action" style="margin: 0; background: #10B981; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px;">+ ລາຍຮັບບັງເອີນ</button>
+                            <button class="btn-action" style="margin: 0; background: #EF4444; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px;">- ລາຍຈ່າຍບັງເອີນ</button>
+                        </div>
                     </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed var(--border-color); color: #4B5563; font-size: 14px; line-height: 1.8;">
+                    <p style="font-weight: bold; font-size: 15px; color: var(--primary); margin-bottom: 5px;">💻 ຂຽນ ແລະ ພັດທະນາໂດຍ: ອາຈານ ບຸນແຕ່ງ ຊົ່ງຕົງມົວ</p>
+                    <p>📞 ໂທ: <span style="font-weight: bold;">020 5945 6999, 020 9944 4448</span></p>
                 </div>
             </div>
 
-            <!-- ຂໍ້ຄວາມ Credit ຜູ້ພັດທະນາ -->
-            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed var(--border-color); color: #4B5563; font-size: 14px; line-height: 1.8;">
-                <p style="font-weight: bold; font-size: 15px; color: var(--primary); margin-bottom: 5px;">💻 ຂຽນ ແລະ ພັດທະນາໂດຍ: ອາຈານ ບຸນແຕ່ງ ຊົ່ງຕົງມົວ</p>
-                <p>📞 ໂທ: <span style="font-weight: bold;">020 5945 6999, 020 9944 4448</span></p>
+            <div id="wallet" class="content-section">
+                <h3>ກະເປົາເງິນ</h3>
+                <p>ໜ້າຈັດການການເງິນ...</p>
             </div>
 
-        </div>
+            <!-- 3. ໜ້ານຳເຂົ້າສິນຄ້າ -->
+            <div id="import" class="content-section">
+                <div class="card" style="margin-bottom: 20px; background: #F8FAFC; border: 1px dashed var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;">📋 ວາງຂໍ້ຄວາມໃບບິນດ່ວນ (ນຳເຂົ້າ)</h4>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="file" id="excelUploadImport" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event, 'import')">
+                            <button class="btn-action btn-info" style="width: auto; margin: 0; padding: 5px 15px; font-size: 14px;" onclick="document.getElementById('excelUploadImport').click()">📁 ອັບໂຫຼດ Excel</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <textarea id="quickTextInput" placeholder="ກັອບປີ້ຂໍ້ຄວາມຈາກໃບບິນ ຫຼື ແຊັດ ແລ້ວມາວາງທີ່ນີ້ (Ctrl+V)..." rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 5px; font-family: inherit;"></textarea>
+                        <button class="btn-action" style="width: auto; margin: 0; background: #10B981;" onclick="parseQuickText('import')">➕ ບັນທຶກລົງຕາຕະລາງນຳເຂົ້າ</button>
+                        <span id="scanStatus" style="color: #6B7280; font-size: 14px;"></span>
+                    </div>
+                </div>
 
-        <div id="wallet" class="content-section">
-            <h3>ກະເປົາເງິນ</h3>
-            <p>ໜ້າຈັດການການເງິນ...</p>
-        </div>
-
-        <!-- ໜ້ານຳເຂົ້າສິນຄ້າ -->
-        <div id="import" class="content-section">
-            <div class="card" style="margin-bottom: 20px; background: #F8FAFC; border: 1px dashed var(--primary);">
-                <!-- ແກ້ໄຂແຖວຫົວຂໍ້ ໃຫ້ມີປຸ່ມອັບໂຫຼດ -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h4 style="margin: 0;">📋 ວາງຂໍ້ຄວາມໃບບິນດ່ວນ (ນຳເຂົ້າ)</h4>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="file" id="excelUploadImport" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event, 'import')">
-                        <button class="btn-action btn-info" style="width: auto; margin: 0; padding: 5px 15px; font-size: 14px;" onclick="document.getElementById('excelUploadImport').click()">📁 ອັບໂຫຼດ Excel</button>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>ຕາຕະລາງ ນຳເຂົ້າສິນຄ້າ</h3>
+                    <div class="admin-only" style="gap: 10px;">
+                        <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('import')">🗑️ ລຶບຂໍ້ມູນ</button>
                     </div>
                 </div>
                 
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <textarea id="quickTextInput" placeholder="ກັອບປີ້ຂໍ້ຄວາມຈາກໃບບິນ ຫຼື ແຊັດ ແລ້ວມາວາງທີ່ນີ້ (Ctrl+V)..." rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 5px; font-family: 'Times New Roman', 'Phetsarath OT', serif;"></textarea>
-                    <button class="btn-action" style="width: auto; margin: 0; background: #10B981;" onclick="parseQuickText('import')">➕ ບັນທຶກລົງຕາຕະລາງນຳເຂົ້າ</button>
-                    <span id="scanStatus" style="color: #6B7280; font-size: 14px;"></span>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="width: 50px;">ລ/ດ</th>
+                                <th colspan="2">ວັນ/ເດືອນ/ປີ</th>
+                                <th colspan="2">ຊື່ ແລະ ນາມສະກຸນ (ເບີໂທ)</th>
+                                <th rowspan="2">ເນື້ອໃນລາຍການ (ສິນຄ້າ)</th>
+                                <th rowspan="2">ລາຄາລວມ</th>
+                                <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
+                                <th rowspan="2">ໝາຍເຫດ</th>
+                                <th rowspan="2" class="admin-cell" style="width: 40px;"><input type="checkbox" id="selectAllImport" onclick="toggleAllCheckboxes('import')"></th>
+                            </tr>
+                            <tr>
+                                <th>ວັນນຳເຂົ້າ</th>
+                                <th>ວັນຮັບເຄື່ອງ</th>
+                                <th>ຜູ້ຝາກ</th>
+                                <th>ຜູ້ຮັບ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="importTableBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6">ລວມທັງໝົດ</td>
+                                <td id="grandTotal">0 ກີບ</td>
+                                <td></td>
+                                <td></td>
+                                <td class="admin-cell"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>ຕາຕະລາງ ນຳເຂົ້າສິນຄ້າ</h3>
-                <div class="admin-only" style="display: flex; gap: 10px;">
-                    <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('import')">🗑️ ລຶບຂໍ້ມູນ</button>
-                </div>
-            </div>
-            
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th rowspan="2" style="width: 50px;">ລ/ດ</th>
-                            <th colspan="2">ວັນ/ເດືອນ/ປີ</th>
-                            <th colspan="2">ຊື່ ແລະ ນາມສະກຸນ (ເບີໂທ)</th>
-                            <th rowspan="2">ເນື້ອໃນລາຍການ (ສິນຄ້າ)</th>
-                            <th rowspan="2">ລາຄາລວມ</th>
-                            <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
-                            <th rowspan="2">ໝາຍເຫດ</th>
-                            <th rowspan="2" style="width: 40px;"><input type="checkbox" id="selectAllImport" onclick="toggleAllCheckboxes('import')"></th>
-                        </tr>
-                        <tr>
-                            <th>ວັນນຳເຂົ້າ</th>
-                            <th>ວັນຮັບເຄື່ອງ</th>
-                            <th>ຜູ້ຝາກ</th>
-                            <th>ຜູ້ຮັບ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="importTableBody"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="6">ລວມທັງໝົດ</td>
-                            <td id="grandTotal">0 ກີບ</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
+            <!-- 4. ໜ້ານຳອອກສິນຄ້າ -->
+            <div id="export" class="content-section">
+                <div class="card" style="margin-bottom: 20px; background: #F8FAFC; border: 1px dashed var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;">📋 ວາງຂໍ້ຄວາມໃບບິນດ່ວນ (ນຳອອກ)</h4>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="file" id="excelUploadExport" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event, 'export')">
+                            <button class="btn-action btn-info" style="width: auto; margin: 0; padding: 5px 15px; font-size: 14px;" onclick="document.getElementById('excelUploadExport').click()">📁 ອັບໂຫຼດ Excel</button>
+                        </div>
+                    </div>
 
-        <!-- ໜ້ານຳອອກສິນຄ້າ -->
-        <div id="export" class="content-section">
-            <div class="card" style="margin-bottom: 20px; background: #F8FAFC; border: 1px dashed var(--primary);">
-                <!-- ແກ້ໄຂແຖວຫົວຂໍ້ ໃຫ້ມີປຸ່ມອັບໂຫຼດ -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h4 style="margin: 0;">📋 ວາງຂໍ້ຄວາມໃບບິນດ່ວນ (ນຳອອກ)</h4>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="file" id="excelUploadExport" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event, 'export')">
-                        <button class="btn-action btn-info" style="width: auto; margin: 0; padding: 5px 15px; font-size: 14px;" onclick="document.getElementById('excelUploadExport').click()">📁 ອັບໂຫຼດ Excel</button>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <textarea id="quickTextInputExport" placeholder="ກັອບປີ້ຂໍ້ຄວາມຈາກໃບບິນ ຫຼື ແຊັດ ແລ້ວມາວາງທີ່ນີ້ (Ctrl+V)..." rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 5px; font-family: inherit;"></textarea>
+                        <button class="btn-action" style="width: auto; margin: 0; background: #10B981;" onclick="parseQuickText('export')">➕ ບັນທຶກລົງຕາຕະລາງນຳອອກ</button>
+                        <span id="scanStatusExport" style="color: #6B7280; font-size: 14px;"></span>
                     </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <textarea id="quickTextInputExport" placeholder="ກັອບປີ້ຂໍ້ຄວາມຈາກໃບບິນ ຫຼື ແຊັດ ແລ້ວມາວາງທີ່ນີ້ (Ctrl+V)..." rows="3" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 5px; font-family: 'Times New Roman', 'Phetsarath OT', serif;"></textarea>
-                    <button class="btn-action" style="width: auto; margin: 0; background: #10B981;" onclick="parseQuickText('export')">➕ ບັນທຶກລົງຕາຕະລາງນຳອອກ</button>
-                    <span id="scanStatusExport" style="color: #6B7280; font-size: 14px;"></span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>ຕາຕະລາງ ນຳອອກສິນຄ້າ</h3>
+                    <div class="admin-only" style="gap: 10px;">
+                        <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('export')">🗑️ ລຶບຂໍ້ມູນ</button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="width: 50px;">ລ/ດ</th>
+                                <th colspan="2">ວັນ/ເດືອນ/ປີ</th>
+                                <th colspan="2">ຊື່ ແລະ ນາມສະກຸນ (ເບີໂທ)</th>
+                                <th rowspan="2">ເນື້ອໃນລາຍການ (ສິນຄ້າ)</th>
+                                <th rowspan="2">ລາຄາລວມ</th>
+                                <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
+                                <th rowspan="2">ໝາຍເຫດ</th>
+                                <th rowspan="2" class="admin-cell" style="width: 40px;"><input type="checkbox" id="selectAllExport" onclick="toggleAllCheckboxes('export')"></th>
+                            </tr>
+                            <tr>
+                                <th>ວັນນຳອອກ</th>
+                                <th>ວັນຮັບເຄື່ອງ</th>
+                                <th>ຜູ້ຝາກ</th>
+                                <th>ຜູ້ຮັບ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exportTableBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6">ລວມທັງໝົດ</td>
+                                <td id="grandTotalExport">0 ກີບ</td>
+                                <td></td>
+                                <td></td>
+                                <td class="admin-cell"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>ຕາຕະລາງ ນຳອອກສິນຄ້າ</h3>
-                <div class="admin-only" style="display: flex; gap: 10px;">
-                    <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('export')">🗑️ ລຶບຂໍ້ມູນ</button>
+            <!-- 5. ໜ້າລາຍງານ -->
+            <div id="report" class="content-section">
+                <h3 style="margin-bottom: 20px;">📊 ສະຫຼຸບລາຍງານການເງິນ (ນຳເຂົ້າ-ນຳອອກສິນຄ້າ)</h3>
+                <div class="card" style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div>
+                        <label for="reportType" style="font-weight: bold; font-size: 14px;">ປະເພດລາຍງານ:</label><br>
+                        <select id="reportType" onchange="updateReportOptions()" style="padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-family: inherit; margin-top: 5px; min-width: 200px;">
+                            <option value="monthly">ປະຈຳເດືອນ</option>
+                            <option value="quarterly">ປະຈຳໄຕມາດ</option>
+                            <option value="cumulative">ສະສົມ (3, 6, 9, 12 ເດືອນ)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="reportPeriod" style="font-weight: bold; font-size: 14px;">ເລືອກຊ່ວງເວລາ:</label><br>
+                        <select id="reportPeriod" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-family: inherit; margin-top: 5px; min-width: 250px;">
+                        </select>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th rowspan="2" style="width: 50px;">ລ/ດ</th>
-                            <th colspan="2">ວັນ/ເດືອນ/ປີ</th>
-                            <th colspan="2">ຊື່ ແລະ ນາມສະກຸນ (ເບີໂທ)</th>
-                            <th rowspan="2">ເນື້ອໃນລາຍການ (ສິນຄ້າ)</th>
-                            <th rowspan="2">ລາຄາລວມ</th>
-                            <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
-                            <th rowspan="2">ໝາຍເຫດ</th>
-                            <th rowspan="2" style="width: 40px;"><input type="checkbox" id="selectAllExport" onclick="toggleAllCheckboxes('export')"></th>
-                        </tr>
-                        <tr>
-                            <th>ວັນນຳອອກ</th>
-                            <th>ວັນຮັບເຄື່ອງ</th>
-                            <th>ຜູ້ຝາກ</th>
-                            <th>ຜູ້ຮັບ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="exportTableBody"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="6">ລວມທັງໝົດ</td>
-                            <td id="grandTotalExport">0 ກີບ</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
-    <!-- 5. ໜ້າລາຍງານ (Report) -->
-        <div id="report" class="content-section">
-            <h3 style="margin-bottom: 20px;">📊 ສະຫຼຸບລາຍງານການເງິນ (ນຳເຂົ້າ-ນຳອອກສິນຄ້າ)</h3>
-
-            <!-- ຕົວກອງລາຍງານ (ປັບໃຫ້ອັບເດດອັດຕະໂນມັດເມື່ອເລືອກ) -->
-            <div class="card" style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
-                <div>
-                    <label for="reportType" style="font-weight: bold; font-size: 14px;">ປະເພດລາຍງານ:</label><br>
-                    <select id="reportType" onchange="updateReportOptions()" style="padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-family: inherit; margin-top: 5px; min-width: 200px;">
-                        <option value="monthly">ປະຈຳເດືອນ</option>
-                        <option value="quarterly">ປະຈຳໄຕມາດ</option>
-                        <option value="cumulative">ສະສົມ (3, 6, 9, 12 ເດືອນ)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="reportPeriod" style="font-weight: bold; font-size: 14px;">ເລືອກຊ່ວງເວລາ:</label><br>
-                    <!-- ເພີ່ມ onchange="generateReport()" ໃສ່ບ່ອນນີ້ ເພື່ອໃຫ້ສະແດງຜົນທັນທີ -->
-                    <select id="reportPeriod" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-family: inherit; margin-top: 5px; min-width: 250px;">
-                        <!-- ຕົວເລືອກຈະສະແດງອັດຕະໂນມັດຕາມ JS -->
-                    </select>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="background: var(--primary); color: white; width: 60px;">ລ/ດ</th>
+                                <th style="background: var(--primary); color: white;">ລາຍການ</th>
+                                <th style="background: var(--primary); color: white;">ລາຍຮັບ (ກີບ)</th>
+                                <th style="background: var(--primary); color: white;">ລາຍຈ່າຍ (ກີບ)</th>
+                                <th style="background: var(--primary); color: white;">ໝາຍເຫດ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: #6B7280; padding: 20px;">ກຳລັງໂຫຼດຂໍ້ມູນ...</td></tr>
+                        </tbody>
+                        <tfoot id="reportTableFoot" style="display: none;"></tfoot>
+                    </table>
                 </div>
             </div>
 
-            <!-- ຕາຕະລາງລາຍລະອຽດລາຍງານ -->
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="background: var(--primary); color: white; width: 60px;">ລ/ດ</th>
-                            <th style="background: var(--primary); color: white;">ລາຍການ</th>
-                            <th style="background: var(--primary); color: white;">ລາຍຮັບ (ກີບ)</th>
-                            <th style="background: var(--primary); color: white;">ລາຍຈ່າຍ (ກີບ)</th>
-                            <th style="background: var(--primary); color: white;">ໝາຍເຫດ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportTableBody">
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #6B7280; padding: 20px;">ກຳລັງໂຫຼດຂໍ້ມູນ...</td>
-                        </tr>
-                    </tbody>
-                    <tfoot id="reportTableFoot" style="display: none;">
-                        <!-- ແຖວສະຫຼຸບຈະມາສະແດງຢູ່ນີ້ອັດຕະໂນມັດ -->
-                    </tfoot>
-                </table>
+            <div id="notice" class="content-section">
+                <h3>ກະດານຂ່າວ</h3>
+                <p>ໜ້າປະກາດແຈ້ງເຕືອນ...</p>
             </div>
-        </div>
-
-        <div id="notice" class="content-section">
-            <h3>ກະດານຂ່າວ</h3>
-            <p>ໜ້າປະກາດແຈ້ງເຕືອນ...</p>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
+        // ==========================================
+        // ຕັ້ງຄ່າ Firebase Realtime Database
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfCkGyXVHF6uBUEmRYG9BOPdHHsmiwfio",
+            authDomain: "familyapp-1d5ad.firebaseapp.com",
+            projectId: "familyapp-1d5ad",
+            storageBucket: "familyapp-1d5ad.firebasestorage.app",
+            messagingSenderId: "397559980218",
+            appId: "1:397559980218:web:a39858c68ba9859f756283",
+            measurementId: "G-B6JBEG924Q"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ==========================================
+        // ລະບົບເຂົ້າສູ່ລະບົບ ແລະ ສິດທິການນຳໃຊ້
+        // ==========================================
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+
+        function handleLogin() {
+            const user = document.getElementById('loginUsername').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+            const error = document.getElementById('loginError');
+
+            if (user === 'FAMILY-ADMIN' && pass === 'FA@210807') {
+                loginSuccess('Admin', 'ສະບາຍດີ, ພໍ່', true);
+            } else if (user === 'FAMILY_XY' && pass === 'FA210807') {
+                loginSuccess('General', 'ສະບາຍດີ, ລູກ', false);
+            } else {
+                error.style.display = 'block';
+            }
+        }
+
+        function loginSuccess(role, greeting, isAdmin) {
+            sessionStorage.setItem('family_logged_in', 'true');
+            sessionStorage.setItem('family_role', role);
+            sessionStorage.setItem('family_greeting', greeting);
+            sessionStorage.setItem('family_is_admin', isAdmin);
+
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            
+            document.getElementById('userRole').innerText = role;
+            document.getElementById('userName').innerText = greeting;
+            
+            if (isAdmin === 'true' || isAdmin === true) {
+                document.body.classList.add('is-admin');
+                document.getElementById('userRole').style.background = '#FFD700';
+            } else {
+                document.body.classList.remove('is-admin');
+                document.getElementById('userRole').style.background = '#E5E7EB';
+            }
+            
+            initRealtimeListeners();
+            updateReportOptions();
+        }
+
+        function handleLogout() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        window.onload = function() {
+            const isLoggedIn = sessionStorage.getItem('family_logged_in');
+            if (isLoggedIn === 'true') {
+                const role = sessionStorage.getItem('family_role');
+                const greeting = sessionStorage.getItem('family_greeting');
+                const isAdmin = sessionStorage.getItem('family_is_admin') === 'true';
+                loginSuccess(role, greeting, isAdmin);
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
+        };
+
+        // ==========================================
+        // ຟັງຊັນ Realtime Sync ກັບ Firebase
+        // ==========================================
+        function initRealtimeListeners() {
+            // ຟັງຂໍ້ມູນ ນຳເຂົ້າ (Import) ແບບ Realtime
+            db.ref('import_data').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const tbody = document.getElementById('importTableBody');
+                tbody.innerHTML = '';
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        appendRowToDOM('import', data[key], key);
+                    });
+                }
+                sortTableByDateDescending('import');
+                updateTotalSum();
+                uncheckAllBoxes();
+            });
+
+            // ຟັງຂໍ້ມູນ ນຳອອກ (Export) ແບບ Realtime
+            db.ref('export_data').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const tbody = document.getElementById('exportTableBody');
+                tbody.innerHTML = '';
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        appendRowToDOM('export', data[key], key);
+                    });
+                }
+                sortTableByDateDescending('export');
+                updateTotalSumExport();
+                uncheckAllBoxes();
+            });
+        }
+
+        function appendRowToDOM(type, data, firebaseKey) {
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const tableBody = document.getElementById(tableBodyId);
+            const rowCount = tableBody.rows.length + 1;
+            const newRow = document.createElement('tr');
+            newRow.setAttribute('data-id', firebaseKey);
+            
+            const totalClass = type === 'import' ? 'item-total' : 'item-total-export';
+
+            newRow.innerHTML = `
+                <td class="row-index">${rowCount}</td>
+                <td>${data.date}</td>
+                <td>${data.receiveDate}</td>
+                <td>${data.sender} <br>(${data.senderPhone})</td>
+                <td>${data.receiver} <br>(${data.receiverPhone})</td>
+                <td>${data.itemName}</td>
+                <td class="${totalClass}">${data.total}</td>
+                <td>${data.company}</td>
+                <td>${data.note}</td>
+                <td class="admin-cell"><input type="checkbox" class="row-checkbox"></td>
+            `;
+            tableBody.appendChild(newRow);
+        }
+
         // ==========================================
         // ລະບົບປ໋ອບອັບ (Custom Dialog)
         // ==========================================
@@ -378,74 +524,16 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 modal.classList.remove('active');
                 if (onConfirm) onConfirm();
             };
-
             cancelBtn.onclick = function() {
                 modal.classList.remove('active');
             };
         }
-
-        window.onload = function() { loadTableData(); };
 
         function showSection(sectionId, btnElement) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
-        }
-
-        function toggleRole() {
-            const body = document.body;
-            const roleBadge = document.getElementById('userRole');
-            const userName = document.getElementById('userName');
-
-            if (body.classList.contains('is-admin')) {
-                body.classList.remove('is-admin');
-                roleBadge.innerText = 'General';
-                roleBadge.style.background = '#E5E7EB';
-                userName.innerText = 'ສະບາຍດີ, ລູກ';
-            } else {
-                body.classList.add('is-admin');
-                roleBadge.innerText = 'Admin';
-                roleBadge.style.background = '#FFD700';
-                userName.innerText = 'ສະບາຍດີ, ພໍ່';
-            }
-        }
-
-        function loadTableData() {
-            const savedImport = localStorage.getItem('family_import_data');
-            if (savedImport) {
-                document.getElementById('importTableBody').innerHTML = savedImport;
-                fixOldDataMissingCheckboxes('importTableBody', 'import');
-                updateTotalSum();
-            }
-            
-            const savedExport = localStorage.getItem('family_export_data');
-            if (savedExport) {
-                document.getElementById('exportTableBody').innerHTML = savedExport;
-                fixOldDataMissingCheckboxes('exportTableBody', 'export');
-                updateTotalSumExport();
-            }
-            uncheckAllBoxes();
-        }
-
-        function fixOldDataMissingCheckboxes(tableBodyId, type) {
-            const tableBody = document.getElementById(tableBodyId);
-            let isModified = false;
-            const rows = tableBody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                if (row.children.length === 9) {
-                    const td = document.createElement('td');
-                    td.innerHTML = '<input type="checkbox" class="row-checkbox">';
-                    row.appendChild(td);
-                    isModified = true;
-                }
-            });
-
-            if (isModified) {
-                if (type === 'import') localStorage.setItem('family_import_data', tableBody.innerHTML);
-                else localStorage.setItem('family_export_data', tableBody.innerHTML);
-            }
         }
 
         function formatDateToDDMMYYYY(dateStr) {
@@ -459,7 +547,132 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         }
 
         // ==========================================
-        // ລະບົບອັບໂຫຼດໄຟລ໌ Excel (ປັບປຸງຕາມຄໍລຳ ຮຸ່ງອາລຸນ)
+        // ຟັງຊັນກວດສອບຂໍ້ມູນຊ້ຳກັນ (ກ່ອນບັນທຶກ)
+        // ==========================================
+        function isDuplicate(data, type) {
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const rows = document.querySelectorAll(`#${tableBodyId} tr`);
+            
+            const clean = (str) => (str || '').toString().replace(/[\s\n\r\t(),]/g, '');
+            
+            const newDate = clean(data.date);
+            const newSender = clean(data.sender) + clean(data.senderPhone);
+            const newReceiver = clean(data.receiver) + clean(data.receiverPhone);
+            const newItem = clean(data.itemName);
+            const newTotal = clean(data.total);
+
+            for (let row of rows) {
+                const cells = row.cells;
+                if (cells.length < 7) continue;
+                
+                const rowDate = clean(cells[1].innerText);
+                const rowSender = clean(cells[3].innerText);
+                const rowReceiver = clean(cells[4].innerText);
+                const rowItem = clean(cells[5].innerText);
+                const rowTotal = clean(cells[6].innerText);
+                
+                if (rowDate === newDate && 
+                    rowSender === newSender && 
+                    rowReceiver === newReceiver && 
+                    rowItem === newItem && 
+                    rowTotal === newTotal) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ==========================================
+        // ຈັດລຽງວັນທີ ໃໝ່ສຸດຂຶ້ນເທິງ
+        // ==========================================
+        function sortTableByDateDescending(type) {
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const tbody = document.getElementById(tableBodyId);
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                const dateA = a.cells[1].innerText.trim();
+                const dateB = b.cells[1].innerText.trim();
+
+                const parseDate = (d) => {
+                    if (!d || d === '-') return '0000-00-00 00:00';
+                    const parts = d.split(' ');
+                    const datePart = parts[0].split('-');
+                    const timePart = parts[1] || '00:00';
+                    
+                    if (datePart.length === 3) {
+                        return `${datePart[2]}-${datePart[1]}-${datePart[0]} ${timePart}`;
+                    }
+                    return d;
+                };
+
+                const timeA = parseDate(dateA);
+                const timeB = parseDate(dateB);
+
+                if (timeA > timeB) return -1;
+                if (timeA < timeB) return 1;
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+            reindexRows(tableBodyId);
+        }
+
+        function reindexRows(tableBodyId) {
+            const rows = document.getElementById(tableBodyId).querySelectorAll('tr');
+            rows.forEach((row, index) => { 
+                const idxCell = row.querySelector('.row-index');
+                if(idxCell) idxCell.innerText = index + 1; 
+            });
+        }
+
+        // ==========================================
+        // ຟັງຊັນອັບເດດໜ້າ Dashboard
+        // ==========================================
+        function updateDashboard() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let thisMonthExpense = 0;
+            
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            const currentYear = now.getFullYear();
+
+            document.querySelectorAll('#import table tbody .item-total').forEach(cell => {
+                const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
+                totalExpense += amount;
+                
+                const row = cell.closest('tr');
+                if(row.cells.length > 2) {
+                    const dateStr = row.cells[2].innerText.trim();
+                    if (dateStr !== "-" && dateStr !== "") {
+                        const parts = dateStr.split('-');
+                        if (parts.length === 3) {
+                            const rowMonth = parseInt(parts[1], 10);
+                            const rowYear = parseInt(parts[2], 10);
+                            if (rowMonth === currentMonth && rowYear === currentYear) {
+                                thisMonthExpense += amount;
+                            }
+                        }
+                    }
+                }
+            });
+
+            document.querySelectorAll('#export table tbody .item-total-export').forEach(cell => {
+                const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
+                totalIncome += amount;
+            });
+
+            const netBalance = totalIncome - totalExpense;
+
+            document.getElementById('dashboardTotalBalance').innerText = netBalance.toLocaleString();
+            document.getElementById('dashboardMonthlyExpense').innerText = thisMonthExpense.toLocaleString() + ' ກີບ';
+        }
+
+        // ==========================================
+        // ອັບໂຫຼດ Excel ພ້ອມກວດສອບຊ້ຳ
         // ==========================================
         function handleExcelUpload(event, type) {
             const file = event.target.files[0];
@@ -476,70 +689,48 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                     const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
                     let importedCount = 0;
+                    let duplicateCount = 0;
                     
-                    // index ໃນ SheetJS ເລີ່ມຈາກ 0 (A=0, B=1, C=2, ..., J=9, L=11, M=12, N=13, O=14, P=15, U=20)
-                    for (let i = 1; i < json.length; i++) { // i=1 ຄືຂ້າມແຖວຫົວຂໍ້ (Header)
+                    for (let i = 1; i < json.length; i++) {
                         const row = json[i];
                         if (!row || row.length === 0) continue; 
 
-                        // ດຶງລາຄາ ຈາກຄໍລຳ J (index 9)
                         let rawPrice = row[9] || "0";
                         let formattedPrice = rawPrice.toString().replace(/,/g, ''); 
-
-                        // ດຶງວັນທີ ຈາກຄໍລຳ B (1) ແລະ C (2)
                         let dateB = row[1] ? formatDateToDDMMYYYY(row[1].toString()) : "-";
                         let dateC = row[2] ? formatDateToDDMMYYYY(row[2].toString()) : "-";
 
-                        // ດຶງຜູ້ຝາກ ຈາກ L (11) ແລະ M (12)
-                        let senderName = row[11] || "ຜູ້ຝາກ";
-                        let senderPhone = row[12] || "-";
-
-                        // ດຶງຜູ້ຮັບ ຈາກ N (13) ແລະ O (14)
-                        let receiverName = row[13] || "ຜູ້ຮັບ";
-                        let receiverPhone = row[14] || "-";
-
                         const parsedData = {
-                            date: dateB,
-                            receiveDate: dateC,
-                            sender: senderName,
-                            senderPhone: senderPhone,
-                            receiver: receiverName,
-                            receiverPhone: receiverPhone,
-                            itemName: row[15] || "ສິນຄ້າ", // ດຶງຈາກ P (15)
+                            date: dateB, receiveDate: dateC,
+                            sender: row[11] || "ຜູ້ຝາກ", senderPhone: row[12] || "-",
+                            receiver: row[13] || "ຜູ້ຮັບ", receiverPhone: row[14] || "-",
+                            itemName: row[15] || "ສິນຄ້າ",
                             total: Number(formattedPrice).toLocaleString() || "0",
-                            company: "ຮຸ່ງອາລຸນ", // ຕັ້ງຄ່າຕາຍຕົວໄວ້ກ່ອນ
-                            note: row[20] || "-" // ດຶງຈາກ U (20)
+                            company: "ຮຸ່ງອາລຸນ", note: row[20] || "-" 
                         };
 
-                        if (type === 'import') {
-                            addRowToTable(parsedData);
+                        if (!isDuplicate(parsedData, type)) {
+                            const dbRefPath = type === 'import' ? 'import_data' : 'export_data';
+                            db.ref(dbRefPath).push(parsedData);
+                            importedCount++;
                         } else {
-                            addRowToTableExport(parsedData);
+                            duplicateCount++;
                         }
-                        importedCount++;
                     }
 
-                    // ບັນທຶກລົງ LocalStorage
-                    if (type === 'import') {
-                        localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
-                    } else {
-                        localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
-                    }
-
-                    customAlert('ສຳເລັດ', `ອັບໂຫຼດຂໍ້ມູນສຳເລັດຈຳນວນ ${importedCount} ລາຍການ`, 'alert');
-                    
+                    customAlert('ສຳເລັດ', `ເພີ່ມຂໍ້ມູນໃໝ່ສຳເລັດ: ${importedCount} ລາຍການ\n(ຂ້າມຂໍ້ມູນທີ່ຊ້ຳກັນ: ${duplicateCount} ລາຍການ)`, 'alert');
                 } catch (error) {
                     console.error(error);
                     customAlert('ຜິດພາດ', 'ບໍ່ສາມາດອ່ານໄຟລ໌ Excel ໄດ້. ກະລຸນາກວດສອບຮູບແບບໄຟລ໌.', 'alert');
                 }
-                
-                // ລ້າງຄ່າ input ເພື່ອໃຫ້ອັບໂຫຼດໄຟລ໌ເດີມໄດ້ອີກ
                 event.target.value = "";
             };
-            
             reader.readAsArrayBuffer(file);
         }
 
+        // ==========================================
+        // ວາງຂໍ້ຄວາມໃບບິນດ່ວນ ພ້ອມກວດສອບຊ້ຳເດັດຂາດ
+        // ==========================================
         function parseQuickText(type) {
             const inputId = type === 'import' ? 'quickTextInput' : 'quickTextInputExport';
             const statusId = type === 'import' ? 'scanStatus' : 'scanStatusExport';
@@ -547,22 +738,14 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             const statusText = document.getElementById(statusId);
             const text = textArea.value;
 
-            if (!text.trim()) {
-                customAlert('ແຈ້ງເຕືອນ', 'ກະລຸນາວາງຂໍ້ຄວາມໃບບິນກ່ອນ!', 'alert');
-                return;
-            }
+            if (!text.trim()) { customAlert('ແຈ້ງເຕືອນ', 'ກະລຸນາວາງຂໍ້ຄວາມໃບບິນກ່ອນ!', 'alert'); return; }
 
             try {
-                let depositDate = "-";
-                let receiveDate = "-";
-                let senderName = "ຜູ້ຝາກ";
-                let senderPhone = "-";
-                let receiverName = "ລູກຄ້າ";
-                let receiverPhone = "-";
-                let itemName = "ເສື້ອຜ້າ/ສິນຄ້າ";
-                let totalPrice = "0";
-                let companyName = "ອານຸສິດ";
-                let noteText = "ສົ່ງສຳເລັດ";
+                let depositDate = "-"; let receiveDate = "-";
+                let senderName = "ຜູ້ຝາກ"; let senderPhone = "-";
+                let receiverName = "ລູກຄ້າ"; let receiverPhone = "-";
+                let itemName = "ເສື້ອຜ້າ/ສິນຄ້າ"; let totalPrice = "0";
+                let companyName = "ອານຸສິດ"; let noteText = "ສົ່ງສຳເລັດ";
 
                 if (text.includes("ຮຸ່ງອາລຸນ") || text.includes("XGI") || text.includes("ຄ່າຂົນສົ່ງປາຍທາງ")) {
                     companyName = "ຮຸ່ງອາລຸນ";
@@ -674,7 +857,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                         const codMatch = text.match(/ເກັບCOD:\s*([0-9,]+)\s*KIP/i) || text.match(/ເກັບCOD:\s*([0-9,]+)/i);
                         if (codMatch) totalPrice = codMatch[1].trim();
                     }
-
                     if (text.includes("ຈັດສົ່ງສຳເລັດແລ້ວ")) noteText = "ຈັດສົ່ງສຳເລັດແລ້ວ";
                 }
 
@@ -684,59 +866,26 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                     company: companyName, note: noteText
                 };
 
-                if (type === 'import') {
-                    addRowToTable(parsedData);
-                    localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
-                } else {
-                    addRowToTableExport(parsedData);
-                    localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
+                // ກວດສອບຊ້ຳ: ຫ้ามບັນທຶກເດັດຂາດຖ້າຊ້ຳ
+                if (isDuplicate(parsedData, type)) {
+                    statusText.innerHTML = "<strong>❌ ບິນນີ້ມີໃນລະບົບແລ້ວ! (ປະຕິເສດການບັນທຶກຊ້ຳ)</strong>";
+                    statusText.style.color = "#EF4444";
+                    return;
                 }
 
-                statusText.innerText = "ບັນທຶກສຳເລັດ ✅ (" + companyName + ")";
+                // ບັນທຶກລົງ Firebase Realtime Database
+                const dbRefPath = type === 'import' ? 'import_data' : 'export_data';
+                db.ref(dbRefPath).push(parsedData);
+                
+                statusText.innerHTML = "<strong>ບັນທຶກສຳເລັດ ✅ (" + companyName + ")</strong>";
                 statusText.style.color = "#10B981";
                 textArea.value = "";
 
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "ເກີດຂໍ້ຜິດພາດ ❌";
+                statusText.innerText = "ເກີດຂໍ້ຜິດພາດໃນການອ່ານຂໍ້ມູນ ❌";
                 statusText.style.color = "#EF4444";
             }
-        }
-
-        function addRowToTable(data) {
-            const tableBody = document.getElementById('importTableBody');
-            const rowCount = tableBody.rows.length + 1;
-            const newRow = document.createElement('tr');
-            
-            newRow.innerHTML = `
-                <td class="row-index">${rowCount}</td>
-                <td>${data.date}</td><td>${data.receiveDate}</td>
-                <td>${data.sender} <br>(${data.senderPhone})</td>
-                <td>${data.receiver} <br>(${data.receiverPhone})</td>
-                <td>${data.itemName}</td>
-                <td class="item-total">${data.total}</td><td>${data.company}</td><td>${data.note}</td>
-                <td><input type="checkbox" class="row-checkbox"></td>
-            `;
-            tableBody.appendChild(newRow);
-            updateTotalSum();
-        }
-
-        function addRowToTableExport(data) {
-            const tableBody = document.getElementById('exportTableBody');
-            const rowCount = tableBody.rows.length + 1;
-            const newRow = document.createElement('tr');
-            
-            newRow.innerHTML = `
-                <td class="row-index">${rowCount}</td>
-                <td>${data.date}</td><td>${data.receiveDate}</td>
-                <td>${data.sender} <br>(${data.senderPhone})</td>
-                <td>${data.receiver} <br>(${data.receiverPhone})</td>
-                <td>${data.itemName}</td>
-                <td class="item-total-export">${data.total}</td><td>${data.company}</td><td>${data.note}</td>
-                <td><input type="checkbox" class="row-checkbox"></td>
-            `;
-            tableBody.appendChild(newRow);
-            updateTotalSumExport();
         }
 
         function updateTotalSum() {
@@ -745,7 +894,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 sum += parseFloat(cell.innerText.replace(/,/g, '')) || 0;
             });
             document.getElementById('grandTotal').innerText = sum.toLocaleString() + ' ກີບ';
-            updateDashboard(); // <--- ເພີ່ມແຖວນີ້ເຂົ້າໄປ
+            updateDashboard();
         }
 
         function updateTotalSumExport() {
@@ -754,7 +903,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 sum += parseFloat(cell.innerText.replace(/,/g, '')) || 0;
             });
             document.getElementById('grandTotalExport').innerText = sum.toLocaleString() + ' ກີບ';
-            updateDashboard(); // <--- ເພີ່ມແຖວນີ້ເຂົ້າໄປ
+            updateDashboard();
         }
 
         function toggleAllCheckboxes(type) {
@@ -763,42 +912,39 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
         }
 
+        // ==========================================
+        // ລຶບຂໍ້ມູນອອກຈາກ Firebase
+        // ==========================================
         function deleteData(type) {
             const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
             const tableBody = document.getElementById(tableBodyId);
             const allCheckboxes = tableBody.querySelectorAll('.row-checkbox');
-            const selectedCheckboxes = tableBody.querySelectorAll('.row-checkbox:checked');
+            const selectedRows = tableBody.querySelectorAll('.row-checkbox:checked');
             const masterCheckbox = document.getElementById(type === 'import' ? 'selectAllImport' : 'selectAllExport');
             
-            if (selectedCheckboxes.length === 0) {
+            if (selectedRows.length === 0) {
                 customAlert('ແຈ້ງເຕືອນ', 'ກະລຸນາຕິກເລືອກລາຍການທີ່ຕ້ອງການລຶບກ່ອນ!', 'alert');
                 return;
             }
 
-            const isDeleteAll = selectedCheckboxes.length === allCheckboxes.length;
+            const isDeleteAll = selectedRows.length === allCheckboxes.length;
             const confirmMsg = isDeleteAll 
                 ? 'ທ່ານຕ້ອງການລຶບຂໍ້ມູນທັງໝົດແທ້ບໍ? (ບໍ່ສາມາດກູ້ຄືນໄດ້)' 
-                : `ທ່ານຕ້ອງການລຶບ ${selectedCheckboxes.length} ລາຍການທີ່ເລືອກແທ້ບໍ?`;
+                : `ທ່ານຕ້ອງການລຶບ ${selectedRows.length} ລາຍການທີ່ເລືອກແທ້ບໍ?`;
 
             customAlert('ຢືນຢັນການລຶບ', confirmMsg, 'confirm', function() {
-                selectedCheckboxes.forEach(cb => { cb.closest('tr').remove(); });
-                reindexRows(tableBodyId);
-
-                if (type === 'import') {
-                    localStorage.setItem('family_import_data', tableBody.innerHTML);
-                    updateTotalSum();
-                } else {
-                    localStorage.setItem('family_export_data', tableBody.innerHTML);
-                    updateTotalSumExport();
-                }
+                const dbRefPath = type === 'import' ? 'import_data' : 'export_data';
+                
+                selectedRows.forEach(cb => {
+                    const row = cb.closest('tr');
+                    const firebaseKey = row.getAttribute('data-id');
+                    if (firebaseKey) {
+                        db.ref(`${dbRefPath}/${firebaseKey}`).remove();
+                    }
+                });
                 
                 masterCheckbox.checked = false;
             });
-        }
-
-        function reindexRows(tableBodyId) {
-            const rows = document.getElementById(tableBodyId).querySelectorAll('tr');
-            rows.forEach((row, index) => { row.querySelector('.row-index').innerText = index + 1; });
         }
         
         function uncheckAllBoxes() {
@@ -806,15 +952,8 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         }
 
         // ==========================================
-        // ລະບົບລາຍງານ (Report)
+        // ລະບົບລາຍງານ
         // ==========================================
-        
-        // ໂຫຼດຕົວເລືອກເລີ່ມຕົ້ນເມື່ອເປີດໜ້າຈໍ
-        window.addEventListener('DOMContentLoaded', () => {
-            updateReportOptions();
-        });
-
-        // ປ່ຽນແປງຕົວເລືອກໃນ Dropdown ທີ 2 ອີງຕາມ Dropdown ທີ 1
         function updateReportOptions() {
             const type = document.getElementById('reportType').value;
             const periodSelect = document.getElementById('reportPeriod');
@@ -835,19 +974,16 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 periodSelect.innerHTML += `<option value="1,2,3,4,5,6,7,8,9">ປະຈຳ 9 ເດືອນ (ເດືອນ 1-9)</option>`;
                 periodSelect.innerHTML += `<option value="1,2,3,4,5,6,7,8,9,10,11,12">ປະຈຳ 12 ເດືອນ / ປີ (ເດືອນ 1-12)</option>`;
             }
+            generateReport();
         }
 
-        // ດຶງເລກເດືອນຈາກຂໍ້ຄວາມວັນທີ "dd-mm-yyyy"
         function getMonthFromDateStr(dateStr) {
             if (!dateStr || dateStr === "-") return -1;
             const parts = dateStr.split('-');
-            if(parts.length === 3) {
-                return parseInt(parts[1], 10);
-            }
+            if(parts.length === 3) return parseInt(parts[1], 10);
             return -1;
         }
 
-    // ຟັງຊັນຄຳນວນ ແລະ ສະແດງລາຍງານແບບອັດຕະໂນມັດ (ແກ້ໄຂບັກ)
         function generateReport() {
             const periodSelect = document.getElementById('reportPeriod');
             if(!periodSelect || periodSelect.selectedIndex === -1) return;
@@ -855,12 +991,10 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             const selectedText = periodSelect.options[periodSelect.selectedIndex].text;
             const targetMonths = periodSelect.value.split(',').map(num => parseInt(num, 10));
 
-            let totalIncome = 0; // ນຳອອກ (ລາຍຮັບ)
-            let totalExpense = 0; // ນຳເຂົ້າ (ລາຍຈ່າຍ)
+            let totalIncome = 0; 
+            let totalExpense = 0; 
 
-            // ຄຳນວນລາຍຈ່າຍ (Import)
-            const importRows = document.querySelectorAll('#importTableBody tr');
-            importRows.forEach(row => {
+            document.querySelectorAll('#importTableBody tr').forEach(row => {
                 if(row.cells.length > 2) {
                     const dateCell = row.cells[2].innerText.trim(); 
                     const month = getMonthFromDateStr(dateCell);
@@ -871,9 +1005,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 }
             });
 
-            // ຄຳນວນລາຍຮັບ (Export)
-            const exportRows = document.querySelectorAll('#exportTableBody tr');
-            exportRows.forEach(row => {
+            document.querySelectorAll('#exportTableBody tr').forEach(row => {
                 if(row.cells.length > 2) {
                     const dateCell = row.cells[2].innerText.trim(); 
                     const month = getMonthFromDateStr(dateCell);
@@ -886,7 +1018,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
             const netBalance = totalIncome - totalExpense;
 
-            // ອັບເດດຕາຕະລາງລາຍລະອຽດ (Body)
             const reportTableBody = document.getElementById('reportTableBody');
             reportTableBody.innerHTML = `
                 <tr>
@@ -905,7 +1036,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 </tr>
             `;
 
-            // ອັບເດດແຖວອັດທ້າຍ (Footer)
             const reportTableFoot = document.getElementById('reportTableFoot');
             reportTableFoot.innerHTML = `
                 <tr style="background-color: #F3F4F6;">
@@ -922,56 +1052,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             `;
             reportTableFoot.style.display = 'table-row-group';
         }
-
-        // ==========================================
-        // ຟັງຊັນອັບເດດໜ້າ Dashboard ອັດຕະໂນມັດ
-        // ==========================================
-        function updateDashboard() {
-            let totalIncome = 0;
-            let totalExpense = 0;
-            let thisMonthExpense = 0;
-            
-            // ດຶງເດືອນ ແລະ ປີ ປັດຈຸບັນຂອງລະບົບ
-            const now = new Date();
-            const currentMonth = now.getMonth() + 1; // ເດືອນໃນ JS ເລີ່ມຈາກ 0
-            const currentYear = now.getFullYear();
-
-            // 1. ຄຳນວນລາຍຈ່າຍທັງໝົດ ແລະ ລາຍຈ່າຍເດືອນນີ້ (ຈາກຕາຕະລາງນຳເຂົ້າ)
-            document.querySelectorAll('#import table tbody .item-total').forEach(cell => {
-                const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
-                totalExpense += amount;
-                
-                // ກວດສອບເດືອນປັດຈຸບັນ (ອີງຕາມຖັນວັນຮັບເຄື່ອງ Index 2)
-                const row = cell.closest('tr');
-                if(row.cells.length > 2) {
-                    const dateStr = row.cells[2].innerText.trim();
-                    if (dateStr !== "-" && dateStr !== "") {
-                        const parts = dateStr.split('-');
-                        if (parts.length === 3) {
-                            const rowMonth = parseInt(parts[1], 10);
-                            const rowYear = parseInt(parts[2], 10);
-                            if (rowMonth === currentMonth && rowYear === currentYear) {
-                                thisMonthExpense += amount;
-                            }
-                        }
-                    }
-                }
-            });
-
-            // 2. ຄຳນວນລາຍຮັບທັງໝົດ (ຈາກຕາຕະລາງນຳອອກ)
-            document.querySelectorAll('#export table tbody .item-total-export').forEach(cell => {
-                const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
-                totalIncome += amount;
-            });
-
-            // 3. ຍອດເຫຼືອສຸທິ
-            const netBalance = totalIncome - totalExpense;
-
-            // 4. ສົ່ງຄ່າໄປສະແດງໃນໜ້າ Dashboard
-            document.getElementById('dashboardTotalBalance').innerText = netBalance.toLocaleString();
-            document.getElementById('dashboardMonthlyExpense').innerText = thisMonthExpense.toLocaleString() + ' ກີບ';
-        }
-
     </script>
 </body>
 </html>
