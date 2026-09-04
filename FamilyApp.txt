@@ -17,19 +17,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
     <title>Family App</title>
     <!-- ເພີ່ມ Library ສຳລັບອ່ານໄຟລ໌ Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <!-- Firebase App ແລະ Realtime Database SDK (Compat Version) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
     <style>
-        /* ================= ລະບົບສິດທິ (Permissions) ================= */
-        .admin-only { display: none !important; }
-        body.is-admin .admin-only { display: flex !important; }
-        
-        /* ເຊື່ອງຄໍລຳ Checkbox ຖ້າບໍ່ແມ່ນ Admin */
-        body:not(.is-admin) .admin-cell { display: none !important; }
-        
         /* ================= CSS ຕົກແຕ່ງ (Styling) ================= */
         :root {
             --primary: #4F46E5;
@@ -81,6 +69,13 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         tfoot td { font-weight: bold; background-color: #F9FAFB; }
         input[type="checkbox"] { transform: scale(1.3); cursor: pointer; }
 
+    /* ================= ລະບົບສິດທິ (Permissions) ================= */
+        .admin-only { display: none !important; }
+        body.is-admin .admin-only { display: flex !important; } /* <--- ປ່ຽນຈາກ block ເປັນ flex ຢູ່ບ່ອນນີ້ */
+        
+        /* ເຊື່ອງຄໍລຳ Checkbox ຖ້າບໍ່ແມ່ນ Admin */
+        body:not(.is-admin) .admin-cell { display: none !important; }
+
         /* ================= ປ໋ອບອັບ (Custom Modal) ================= */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); justify-content: center; align-items: center; z-index: 1000; }
         .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
@@ -113,7 +108,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         </div>
     </div>
 
-    <!-- ຫຸ້ມແອັບທັງໝົດໄວ້ -->
+    <!-- ຫຸ້ມແອັບທັງໝົດໄວ້ (ຈະສະແດງເມື່ອລັອກອິນຜ່ານ) -->
     <div id="appContainer" style="display: none;">
 
         <!-- ປ໋ອບອັບ Custom Modal -->
@@ -175,8 +170,8 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                         </div>
 
                         <div class="admin-only" style="margin-top: 25px; display: flex; flex-direction: column; gap: 12px;">
-                            <button class="btn-action" style="margin: 0; background: #10B981; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px;">+ ລາຍຮັບບັງເອີນ</button>
-                            <button class="btn-action" style="margin: 0; background: #EF4444; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px;">- ລາຍຈ່າຍບັງເອີນ</button>
+                            <button class="btn-action" style="margin: 0; background: #10B981; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;">+ ລາຍຮັບບັງເອີນ</button>
+                            <button class="btn-action" style="margin: 0; background: #EF4444; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;">- ລາຍຈ່າຍບັງເອີນ</button>
                         </div>
                     </div>
                 </div>
@@ -212,7 +207,8 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>ຕາຕະລາງ ນຳເຂົ້າສິນຄ້າ</h3>
-                    <div class="admin-only" style="gap: 10px;">
+                    <!-- ປຸ່ມລຶບຈະເຫັນສະເພາະ Admin ເທົ່ານັ້ນ -->
+                    <div class="admin-only" style="display: flex; gap: 10px;">
                         <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('import')">🗑️ ລຶບຂໍ້ມູນ</button>
                     </div>
                 </div>
@@ -228,6 +224,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <th rowspan="2">ລາຄາລວມ</th>
                                 <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
                                 <th rowspan="2">ໝາຍເຫດ</th>
+                                <!-- ຄໍລຳ Checkbox ຈະສະແດງສະເພາະ Admin (ຕິດ class admin-cell ໄວ້) -->
                                 <th rowspan="2" class="admin-cell" style="width: 40px;"><input type="checkbox" id="selectAllImport" onclick="toggleAllCheckboxes('import')"></th>
                             </tr>
                             <tr>
@@ -244,6 +241,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <td id="grandTotal">0 ກີບ</td>
                                 <td></td>
                                 <td></td>
+                                <!-- ຫ້ອງວ່າງໃຕ້ Checkbox -->
                                 <td class="admin-cell"></td>
                             </tr>
                         </tfoot>
@@ -271,7 +269,8 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>ຕາຕະລາງ ນຳອອກສິນຄ້າ</h3>
-                    <div class="admin-only" style="gap: 10px;">
+                    <!-- ປຸ່ມລຶບຈະເຫັນສະເພາະ Admin ເທົ່ານັ້ນ -->
+                    <div class="admin-only" style="display: flex; gap: 10px;">
                         <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('export')">🗑️ ລຶບຂໍ້ມູນ</button>
                     </div>
                 </div>
@@ -287,6 +286,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <th rowspan="2">ລາຄາລວມ</th>
                                 <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
                                 <th rowspan="2">ໝາຍເຫດ</th>
+                                <!-- ຄໍລຳ Checkbox ຈະສະແດງສະເພາະ Admin (ຕິດ class admin-cell ໄວ້) -->
                                 <th rowspan="2" class="admin-cell" style="width: 40px;"><input type="checkbox" id="selectAllExport" onclick="toggleAllCheckboxes('export')"></th>
                             </tr>
                             <tr>
@@ -303,6 +303,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <td id="grandTotalExport">0 ກີບ</td>
                                 <td></td>
                                 <td></td>
+                                <!-- ຫ້ອງວ່າງໃຕ້ Checkbox -->
                                 <td class="admin-cell"></td>
                             </tr>
                         </tfoot>
@@ -352,28 +353,14 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 <p>ໜ້າປະກາດແຈ້ງເຕືອນ...</p>
             </div>
         </main>
-    </div>
+    </div> <!-- ປິດ appContainer -->
 
     <script>
         // ==========================================
-        // ຕັ້ງຄ່າ Firebase Realtime Database
+        // ລະບົບເຂົ້າສູ່ລະບົບ ແລະ ສິດທິການນຳໃຊ້ (Login & Roles)
         // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAfCkGyXVHF6uBUEmRYG9BOPdHHsmiwfio",
-            authDomain: "familyapp-1d5ad.firebaseapp.com",
-            projectId: "familyapp-1d5ad",
-            storageBucket: "familyapp-1d5ad.firebasestorage.app",
-            messagingSenderId: "397559980218",
-            appId: "1:397559980218:web:a39858c68ba9859f756283",
-            measurementId: "G-B6JBEG924Q"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // ==========================================
-        // ລະບົບເຂົ້າສູ່ລະບົບ ແລະ ສິດທິການນຳໃຊ້
-        // ==========================================
+        
+        // ກົດປຸ່ມ Enter ໃນຊ່ອງລະຫັດຜ່ານເພື່ອລັອກອິນ
         document.getElementById('loginPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') handleLogin();
         });
@@ -413,7 +400,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 document.getElementById('userRole').style.background = '#E5E7EB';
             }
             
-            initRealtimeListeners();
+            loadTableData();
             updateReportOptions();
         }
 
@@ -434,65 +421,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 document.getElementById('appContainer').style.display = 'none';
             }
         };
-
-        // ==========================================
-        // ຟັງຊັນ Realtime Sync ກັບ Firebase
-        // ==========================================
-        function initRealtimeListeners() {
-            // ຟັງຂໍ້ມູນ ນຳເຂົ້າ (Import) ແບບ Realtime
-            db.ref('import_data').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const tbody = document.getElementById('importTableBody');
-                tbody.innerHTML = '';
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        appendRowToDOM('import', data[key], key);
-                    });
-                }
-                sortTableByDateDescending('import');
-                updateTotalSum();
-                uncheckAllBoxes();
-            });
-
-            // ຟັງຂໍ້ມູນ ນຳອອກ (Export) ແບບ Realtime
-            db.ref('export_data').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const tbody = document.getElementById('exportTableBody');
-                tbody.innerHTML = '';
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        appendRowToDOM('export', data[key], key);
-                    });
-                }
-                sortTableByDateDescending('export');
-                updateTotalSumExport();
-                uncheckAllBoxes();
-            });
-        }
-
-        function appendRowToDOM(type, data, firebaseKey) {
-            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
-            const tableBody = document.getElementById(tableBodyId);
-            const rowCount = tableBody.rows.length + 1;
-            const newRow = document.createElement('tr');
-            newRow.setAttribute('data-id', firebaseKey);
-            
-            const totalClass = type === 'import' ? 'item-total' : 'item-total-export';
-
-            newRow.innerHTML = `
-                <td class="row-index">${rowCount}</td>
-                <td>${data.date}</td>
-                <td>${data.receiveDate}</td>
-                <td>${data.sender} <br>(${data.senderPhone})</td>
-                <td>${data.receiver} <br>(${data.receiverPhone})</td>
-                <td>${data.itemName}</td>
-                <td class="${totalClass}">${data.total}</td>
-                <td>${data.company}</td>
-                <td>${data.note}</td>
-                <td class="admin-cell"><input type="checkbox" class="row-checkbox"></td>
-            `;
-            tableBody.appendChild(newRow);
-        }
 
         // ==========================================
         // ລະບົບປ໋ອບອັບ (Custom Dialog)
@@ -536,6 +464,52 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             btnElement.classList.add('active');
         }
 
+        function loadTableData() {
+            const savedImport = localStorage.getItem('family_import_data');
+            if (savedImport) {
+                document.getElementById('importTableBody').innerHTML = savedImport;
+                fixOldDataMissingCheckboxes('importTableBody', 'import');
+                sortTableByDateDescending('import'); // <--- ເພີ່ມແຖວນີ້
+                updateTotalSum();
+            }
+            
+            const savedExport = localStorage.getItem('family_export_data');
+            if (savedExport) {
+                document.getElementById('exportTableBody').innerHTML = savedExport;
+                fixOldDataMissingCheckboxes('exportTableBody', 'export');
+                sortTableByDateDescending('export'); // <--- ເພີ່ມແຖວນີ້
+                updateTotalSumExport();
+            }
+            uncheckAllBoxes();
+        }
+
+        function fixOldDataMissingCheckboxes(tableBodyId, type) {
+            const tableBody = document.getElementById(tableBodyId);
+            let isModified = false;
+            const rows = tableBody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                if (row.children.length === 9) {
+                    const td = document.createElement('td');
+                    td.className = 'admin-cell'; // ເພີ່ມ class ເພື່ອໃຫ້ເຊື່ອງໄດ້
+                    td.innerHTML = '<input type="checkbox" class="row-checkbox">';
+                    row.appendChild(td);
+                    isModified = true;
+                } else if (row.children.length === 10) {
+                    const lastCell = row.children[9];
+                    if (!lastCell.classList.contains('admin-cell')) {
+                        lastCell.classList.add('admin-cell');
+                        isModified = true;
+                    }
+                }
+            });
+
+            if (isModified) {
+                if (type === 'import') localStorage.setItem('family_import_data', tableBody.innerHTML);
+                else localStorage.setItem('family_export_data', tableBody.innerHTML);
+            }
+        }
+
         function formatDateToDDMMYYYY(dateStr) {
             if (!dateStr || dateStr === "-") return "-";
             const parts = dateStr.split(/[-/]/);
@@ -547,89 +521,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
         }
 
         // ==========================================
-        // ຟັງຊັນກວດສອບຂໍ້ມູນຊ້ຳກັນ (ກ່ອນບັນທຶກ)
-        // ==========================================
-        function isDuplicate(data, type) {
-            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
-            const rows = document.querySelectorAll(`#${tableBodyId} tr`);
-            
-            const clean = (str) => (str || '').toString().replace(/[\s\n\r\t(),]/g, '');
-            
-            const newDate = clean(data.date);
-            const newSender = clean(data.sender) + clean(data.senderPhone);
-            const newReceiver = clean(data.receiver) + clean(data.receiverPhone);
-            const newItem = clean(data.itemName);
-            const newTotal = clean(data.total);
-
-            for (let row of rows) {
-                const cells = row.cells;
-                if (cells.length < 7) continue;
-                
-                const rowDate = clean(cells[1].innerText);
-                const rowSender = clean(cells[3].innerText);
-                const rowReceiver = clean(cells[4].innerText);
-                const rowItem = clean(cells[5].innerText);
-                const rowTotal = clean(cells[6].innerText);
-                
-                if (rowDate === newDate && 
-                    rowSender === newSender && 
-                    rowReceiver === newReceiver && 
-                    rowItem === newItem && 
-                    rowTotal === newTotal) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // ==========================================
-        // ຈັດລຽງວັນທີ ໃໝ່ສຸດຂຶ້ນເທິງ
-        // ==========================================
-        function sortTableByDateDescending(type) {
-            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
-            const tbody = document.getElementById(tableBodyId);
-            if (!tbody) return;
-            
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-
-            rows.sort((a, b) => {
-                const dateA = a.cells[1].innerText.trim();
-                const dateB = b.cells[1].innerText.trim();
-
-                const parseDate = (d) => {
-                    if (!d || d === '-') return '0000-00-00 00:00';
-                    const parts = d.split(' ');
-                    const datePart = parts[0].split('-');
-                    const timePart = parts[1] || '00:00';
-                    
-                    if (datePart.length === 3) {
-                        return `${datePart[2]}-${datePart[1]}-${datePart[0]} ${timePart}`;
-                    }
-                    return d;
-                };
-
-                const timeA = parseDate(dateA);
-                const timeB = parseDate(dateB);
-
-                if (timeA > timeB) return -1;
-                if (timeA < timeB) return 1;
-                return 0;
-            });
-
-            rows.forEach(row => tbody.appendChild(row));
-            reindexRows(tableBodyId);
-        }
-
-        function reindexRows(tableBodyId) {
-            const rows = document.getElementById(tableBodyId).querySelectorAll('tr');
-            rows.forEach((row, index) => { 
-                const idxCell = row.querySelector('.row-index');
-                if(idxCell) idxCell.innerText = index + 1; 
-            });
-        }
-
-        // ==========================================
-        // ຟັງຊັນອັບເດດໜ້າ Dashboard
+        // ຟັງຊັນອັບເດດໜ້າ Dashboard ອັດຕະໂນມັດ
         // ==========================================
         function updateDashboard() {
             let totalIncome = 0;
@@ -671,9 +563,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             document.getElementById('dashboardMonthlyExpense').innerText = thisMonthExpense.toLocaleString() + ' ກີບ';
         }
 
-        // ==========================================
-        // ອັບໂຫຼດ Excel ພ້ອມກວດສອບຊ້ຳ
-        // ==========================================
         function handleExcelUpload(event, type) {
             const file = event.target.files[0];
             if (!file) return;
@@ -689,7 +578,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                     const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
                     let importedCount = 0;
-                    let duplicateCount = 0;
+                    let duplicateCount = 0; // ຕົວແປນັບລາຍການທີ່ຊ້ຳກັນ
                     
                     for (let i = 1; i < json.length; i++) {
                         const row = json[i];
@@ -709,15 +598,24 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                             company: "ຮຸ່ງອາລຸນ", note: row[20] || "-" 
                         };
 
+                        // ກວດສອບວ່າຊ້ຳກັນຫຼືບໍ່ ກ່ອນເພີ່ມລົງຕາຕະລາງ
                         if (!isDuplicate(parsedData, type)) {
-                            const dbRefPath = type === 'import' ? 'import_data' : 'export_data';
-                            db.ref(dbRefPath).push(parsedData);
+                            if (type === 'import') addRowToTable(parsedData);
+                            else addRowToTableExport(parsedData);
                             importedCount++;
                         } else {
-                            duplicateCount++;
+                            duplicateCount++; // ຖ້າຊ້ຳກັນໃຫ້ນັບໄວ້ ແຕ່ບໍ່ບັນທຶກລົງ
                         }
                     }
 
+        // ກ່ອນບັນທຶກລົງ localStorage ໃຫ້ຮຽກໃຊ້ການຈັດລຽງກ່ອນ
+                    sortTableByDateDescending(type); // <--- ເພີ່ມແຖວນີ້ເຂົ້າໄປ
+
+                    // ໂຄດເດີມ
+                    if (type === 'import') localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
+                    else localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
+
+                    // ແຈ້ງເຕືອນສະຫຼຸບການອັບໂຫຼດ
                     customAlert('ສຳເລັດ', `ເພີ່ມຂໍ້ມູນໃໝ່ສຳເລັດ: ${importedCount} ລາຍການ\n(ຂ້າມຂໍ້ມູນທີ່ຊ້ຳກັນ: ${duplicateCount} ລາຍການ)`, 'alert');
                 } catch (error) {
                     console.error(error);
@@ -728,9 +626,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             reader.readAsArrayBuffer(file);
         }
 
-        // ==========================================
-        // ວາງຂໍ້ຄວາມໃບບິນດ່ວນ ພ້ອມກວດສອບຊ້ຳເດັດຂາດ
-        // ==========================================
         function parseQuickText(type) {
             const inputId = type === 'import' ? 'quickTextInput' : 'quickTextInputExport';
             const statusId = type === 'import' ? 'scanStatus' : 'scanStatusExport';
@@ -860,32 +755,81 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                     if (text.includes("ຈັດສົ່ງສຳເລັດແລ້ວ")) noteText = "ຈັດສົ່ງສຳເລັດແລ້ວ";
                 }
 
+    // (ໂຄດສ່ວນເທິງຂອງ parseQuickText ຍັງຄົງເດີມຈົນຮອດການສ້າງ parsedData...)
                 const parsedData = {
                     date: depositDate, receiveDate: receiveDate, sender: senderName, senderPhone: senderPhone,
                     receiver: receiverName, receiverPhone: receiverPhone, itemName: itemName, total: totalPrice,
                     company: companyName, note: noteText
                 };
 
-                // ກວດສອບຊ້ຳ: ຫ้ามບັນທຶກເດັດຂາດຖ້າຊ້ຳ
+                // 1. ກວດສອບວ່າບິນນີ້ຊ້ຳກັນຫຼືບໍ່
                 if (isDuplicate(parsedData, type)) {
-                    statusText.innerHTML = "<strong>❌ ບິນນີ້ມີໃນລະບົບແລ້ວ! (ປະຕິເສດການບັນທຶກຊ້ຳ)</strong>";
-                    statusText.style.color = "#EF4444";
-                    return;
+                    // ຖ້າຊ້ຳກັນ (ມີໃນລະບົບແລ້ວ): ຫ້າມບັນທຶກເດັດຂາດ ແລະ ແຈ້ງເຕືອນສີແດງ
+                    statusText.innerHTML = "<strong>❌ ບິນນີ້ມີໃນລະບົບແລ້ວ! (ລະບົບປະຕິເສດການບັນທຶກຊ້ຳ)</strong>";
+                    statusText.style.color = "#EF4444"; // ສີແດງ
+                    
+                    // ໝາຍເຫດ: ບໍ່ລຶບຂໍ້ຄວາມໃນກ່ອງ ເພື່ອໃຫ້ຜູ້ໃຊ້ກວດເບິ່ງຄືນໄດ້
+                    return; // ຢຸດການເຮັດວຽກຂອງຟັງຊັນທັນທີ ບໍ່ໃຫ້ໄປຕໍ່
                 }
 
-                // ບັນທຶກລົງ Firebase Realtime Database
-                const dbRefPath = type === 'import' ? 'import_data' : 'export_data';
-                db.ref(dbRefPath).push(parsedData);
+                // 2. ຖ້າບໍ່ຊ້ຳກັນ (ເປັນບິນໃໝ່): ໃຫ້ບັນທຶກລົງຕາຕະລາງປົກກະຕິ
+                if (type === 'import') {
+                    addRowToTable(parsedData);
+                    sortTableByDateDescending('import'); // ຈັດລຽງໃໝ່ສຸດຂຶ້ນເທິງ
+                    localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
+                } else {
+                    addRowToTableExport(parsedData);
+                    sortTableByDateDescending('export'); // ຈັດລຽງໃໝ່ສຸດຂຶ້ນເທິງ
+                    localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
+                }
                 
+                // ແຈ້ງເຕືອນວ່າສຳເລັດເປັນສີຂຽວ
                 statusText.innerHTML = "<strong>ບັນທຶກສຳເລັດ ✅ (" + companyName + ")</strong>";
-                statusText.style.color = "#10B981";
-                textArea.value = "";
+                statusText.style.color = "#10B981"; // ສີຂຽວ
+                
+                textArea.value = ""; // ລຶບຂໍ້ຄວາມໃນກ່ອງຖິ້ມ ເມື່ອບັນທຶກສຳເລັດແລ້ວ
 
             } catch (error) {
                 console.error(error);
                 statusText.innerText = "ເກີດຂໍ້ຜິດພາດໃນການອ່ານຂໍ້ມູນ ❌";
                 statusText.style.color = "#EF4444";
             }
+        }
+
+        function addRowToTable(data) {
+            const tableBody = document.getElementById('importTableBody');
+            const rowCount = tableBody.rows.length + 1;
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td class="row-index">${rowCount}</td>
+                <td>${data.date}</td><td>${data.receiveDate}</td>
+                <td>${data.sender} <br>(${data.senderPhone})</td>
+                <td>${data.receiver} <br>(${data.receiverPhone})</td>
+                <td>${data.itemName}</td>
+                <td class="item-total">${data.total}</td><td>${data.company}</td><td>${data.note}</td>
+                <td class="admin-cell"><input type="checkbox" class="row-checkbox"></td>
+            `;
+            tableBody.appendChild(newRow);
+            updateTotalSum();
+        }
+
+        function addRowToTableExport(data) {
+            const tableBody = document.getElementById('exportTableBody');
+            const rowCount = tableBody.rows.length + 1;
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td class="row-index">${rowCount}</td>
+                <td>${data.date}</td><td>${data.receiveDate}</td>
+                <td>${data.sender} <br>(${data.senderPhone})</td>
+                <td>${data.receiver} <br>(${data.receiverPhone})</td>
+                <td>${data.itemName}</td>
+                <td class="item-total-export">${data.total}</td><td>${data.company}</td><td>${data.note}</td>
+                <td class="admin-cell"><input type="checkbox" class="row-checkbox"></td>
+            `;
+            tableBody.appendChild(newRow);
+            updateTotalSumExport();
         }
 
         function updateTotalSum() {
@@ -912,39 +856,42 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
         }
 
-        // ==========================================
-        // ລຶບຂໍ້ມູນອອກຈາກ Firebase
-        // ==========================================
         function deleteData(type) {
             const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
             const tableBody = document.getElementById(tableBodyId);
             const allCheckboxes = tableBody.querySelectorAll('.row-checkbox');
-            const selectedRows = tableBody.querySelectorAll('.row-checkbox:checked');
+            const selectedCheckboxes = tableBody.querySelectorAll('.row-checkbox:checked');
             const masterCheckbox = document.getElementById(type === 'import' ? 'selectAllImport' : 'selectAllExport');
             
-            if (selectedRows.length === 0) {
+            if (selectedCheckboxes.length === 0) {
                 customAlert('ແຈ້ງເຕືອນ', 'ກະລຸນາຕິກເລືອກລາຍການທີ່ຕ້ອງການລຶບກ່ອນ!', 'alert');
                 return;
             }
 
-            const isDeleteAll = selectedRows.length === allCheckboxes.length;
+            const isDeleteAll = selectedCheckboxes.length === allCheckboxes.length;
             const confirmMsg = isDeleteAll 
                 ? 'ທ່ານຕ້ອງການລຶບຂໍ້ມູນທັງໝົດແທ້ບໍ? (ບໍ່ສາມາດກູ້ຄືນໄດ້)' 
-                : `ທ່ານຕ້ອງການລຶບ ${selectedRows.length} ລາຍການທີ່ເລືອກແທ້ບໍ?`;
+                : `ທ່ານຕ້ອງການລຶບ ${selectedCheckboxes.length} ລາຍການທີ່ເລືອກແທ້ບໍ?`;
 
             customAlert('ຢືນຢັນການລຶບ', confirmMsg, 'confirm', function() {
-                const dbRefPath = type === 'import' ? 'import_data' : 'export_data';
-                
-                selectedRows.forEach(cb => {
-                    const row = cb.closest('tr');
-                    const firebaseKey = row.getAttribute('data-id');
-                    if (firebaseKey) {
-                        db.ref(`${dbRefPath}/${firebaseKey}`).remove();
-                    }
-                });
+                selectedCheckboxes.forEach(cb => { cb.closest('tr').remove(); });
+                reindexRows(tableBodyId);
+
+                if (type === 'import') {
+                    localStorage.setItem('family_import_data', tableBody.innerHTML);
+                    updateTotalSum();
+                } else {
+                    localStorage.setItem('family_export_data', tableBody.innerHTML);
+                    updateTotalSumExport();
+                }
                 
                 masterCheckbox.checked = false;
             });
+        }
+
+        function reindexRows(tableBodyId) {
+            const rows = document.getElementById(tableBodyId).querySelectorAll('tr');
+            rows.forEach((row, index) => { row.querySelector('.row-index').innerText = index + 1; });
         }
         
         function uncheckAllBoxes() {
@@ -1052,6 +999,89 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             `;
             reportTableFoot.style.display = 'table-row-group';
         }
+
+// ==========================================
+// ຟັງຊັນກວດສອບຂໍ້ມູນຊ້ຳກັນໃນຕາຕະລາງ
+// ==========================================
+        function isDuplicate(data, type) {
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const rows = document.querySelectorAll(`#${tableBodyId} tr`);
+            
+            // ຟັງຊັນຊ່ວຍລຶບຍະຫວ່າງ, ວົງເລັບ ແລະ ລົງແຖວ ເພື່ອປຽບທຽບໃຫ້ຊັດເຈນ
+            const clean = (str) => (str || '').toString().replace(/[\s\n\r\t(),]/g, '');
+            
+            const newDate = clean(data.date);
+            const newSender = clean(data.sender) + clean(data.senderPhone);
+            const newReceiver = clean(data.receiver) + clean(data.receiverPhone);
+            const newItem = clean(data.itemName);
+            const newTotal = clean(data.total);
+
+            for (let row of rows) {
+                const cells = row.cells;
+                if (cells.length < 7) continue;
+                
+                const rowDate = clean(cells[1].innerText);
+                const rowSender = clean(cells[3].innerText);
+                const rowReceiver = clean(cells[4].innerText);
+                const rowItem = clean(cells[5].innerText);
+                const rowTotal = clean(cells[6].innerText);
+                
+                // ກວດສອບຖ້າ ວັນທີ, ຊື່+ເບີຜູ້ຝາກ, ຊື່+ເບີຜູ້ຮັບ, ຊື່ສິນຄ້າ ແລະ ລາຄາ ກົງກັນ ຖືວ່າຊ້ຳ
+                if (rowDate === newDate && 
+                    rowSender === newSender && 
+                    rowReceiver === newReceiver && 
+                    rowItem === newItem && 
+                    rowTotal === newTotal) {
+                    return true; // ພົບຂໍ້ມູນຊ້ຳກັນແລ້ວ
+                }
+            }
+            return false; // ຍັງບໍ່ມີຂໍ້ມູນນີ້
+        }
+
+// ==========================================
+// ຟັງຊັນຈັດລຽງວັນທີໃໝ່ສຸດຂຶ້ນເທິງ (Newest to Oldest)
+// ==========================================
+        function sortTableByDateDescending(type) {
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const tbody = document.getElementById(tableBodyId);
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                // ດຶງຂໍ້ມູນຈາກຄໍລຳທີ 2 (Index 1) ເຊິ່ງເປັນວັນທີນຳເຂົ້າ/ນຳອອກ
+                const dateA = a.cells[1].innerText.trim();
+                const dateB = b.cells[1].innerText.trim();
+
+                // ຟັງຊັນປ່ຽນ DD-MM-YYYY HH:mm ໃຫ້ເປັນ YYYY-MM-DD HH:mm ເພື່ອໃຫ້ປຽບທຽບໄດ້ງ່າຍ
+                const parseDate = (d) => {
+                    if (!d || d === '-') return '0000-00-00 00:00';
+                    const parts = d.split(' ');
+                    const datePart = parts[0].split('-');
+                    const timePart = parts[1] || '00:00';
+                    
+                    if (datePart.length === 3) {
+                        return `${datePart[2]}-${datePart[1]}-${datePart[0]} ${timePart}`;
+                    }
+                    return d;
+                };
+
+                const timeA = parseDate(dateA);
+                const timeB = parseDate(dateB);
+
+                // ປຽບທຽບ: ຖ້າ timeA ໃໝ່ກວ່າ ໃຫ້ເອົາຂຶ້ນເທິງ (-1)
+                if (timeA > timeB) return -1;
+                if (timeA < timeB) return 1;
+                return 0;
+            });
+
+            // ຕໍ່ແຖວເຂົ້າໃນຕາຕະລາງຄືນຕາມລຳດັບໃໝ່
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // ອັບເດດເລກລຳດັບ (ລ/ດ) ໃໝ່ໃຫ້ລຽງແຕ່ 1, 2, 3...
+            reindexRows(tableBodyId);
+        }
+
     </script>
 </body>
 </html>
