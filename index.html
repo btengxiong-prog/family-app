@@ -6,6 +6,33 @@
     <title>Family App</title>
     <!-- ເພີ່ມ Library ສຳລັບອ່ານໄຟລ໌ Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // ໃຊ້ຄ່າ Config ແທ້ຂອງທ່ານທີ່ສົ່ງມາກ່ອນໜ້ານີ້
+    const firebaseConfig = {
+        apiKey: "AIzaSyAfCkGyXVHF6uBUEmRYG9BOPdHHsmiwfio",
+        authDomain: "familyapp-1d5ad.firebaseapp.com",
+        databaseURL: "https://familyapp-1d5ad-default-rtdb.firebaseio.com",
+        projectId: "familyapp-1d5ad",
+        storageBucket: "familyapp-1d5ad.firebasestorage.app",
+        messagingSenderId: "397559980218",
+        appId: "1:397559980218:web:a39858c68ba9859f756283",
+        measurementId: "G-B6JBEG924Q"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    
+    // ເຮັດໃຫ້ເອີ້ນໃຊ້ໃນຟັງຊັນອື່ນໆຂອງລະບົບໄດ້
+    window.db = db; 
+    window.dbRef = ref;
+    window.dbSet = set;
+    window.dbOnValue = onValue;
+    </script>
+
     <style>
         /* ================= CSS ຕົກແຕ່ງ (Styling) ================= */
         :root {
@@ -60,7 +87,7 @@
 
     /* ================= ລະບົບສິດທິ (Permissions) ================= */
         .admin-only { display: none !important; }
-        body.is-admin .admin-only { display: flex !important; } /* <--- ປ່ຽນຈາກ block ເປັນ flex ຢູ່ບ່ອນນີ້ */
+        body.is-admin .admin-only { display: flex !important; } 
         
         /* ເຊື່ອງຄໍລຳ Checkbox ຖ້າບໍ່ແມ່ນ Admin */
         body:not(.is-admin) .admin-cell { display: none !important; }
@@ -458,7 +485,7 @@
             if (savedImport) {
                 document.getElementById('importTableBody').innerHTML = savedImport;
                 fixOldDataMissingCheckboxes('importTableBody', 'import');
-                sortTableByDateDescending('import'); // <--- ເພີ່ມແຖວນີ້
+                sortTableByDateDescending('import'); 
                 updateTotalSum();
             }
             
@@ -466,7 +493,7 @@
             if (savedExport) {
                 document.getElementById('exportTableBody').innerHTML = savedExport;
                 fixOldDataMissingCheckboxes('exportTableBody', 'export');
-                sortTableByDateDescending('export'); // <--- ເພີ່ມແຖວນີ້
+                sortTableByDateDescending('export'); 
                 updateTotalSumExport();
             }
             uncheckAllBoxes();
@@ -567,7 +594,7 @@
                     const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
                     let importedCount = 0;
-                    let duplicateCount = 0; // ຕົວແປນັບລາຍການທີ່ຊ້ຳກັນ
+                    let duplicateCount = 0; 
                     
                     for (let i = 1; i < json.length; i++) {
                         const row = json[i];
@@ -587,24 +614,20 @@
                             company: "ຮຸ່ງອາລຸນ", note: row[20] || "-" 
                         };
 
-                        // ກວດສອບວ່າຊ້ຳກັນຫຼືບໍ່ ກ່ອນເພີ່ມລົງຕາຕະລາງ
                         if (!isDuplicate(parsedData, type)) {
                             if (type === 'import') addRowToTable(parsedData);
                             else addRowToTableExport(parsedData);
                             importedCount++;
                         } else {
-                            duplicateCount++; // ຖ້າຊ້ຳກັນໃຫ້ນັບໄວ້ ແຕ່ບໍ່ບັນທຶກລົງ
+                            duplicateCount++; 
                         }
                     }
 
-        // ກ່ອນບັນທຶກລົງ localStorage ໃຫ້ຮຽກໃຊ້ການຈັດລຽງກ່ອນ
-                    sortTableByDateDescending(type); // <--- ເພີ່ມແຖວນີ້ເຂົ້າໄປ
+                    sortTableByDateDescending(type);
 
-                    // ໂຄດເດີມ
                     if (type === 'import') localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
                     else localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
 
-                    // ແຈ້ງເຕືອນສະຫຼຸບການອັບໂຫຼດ
                     customAlert('ສຳເລັດ', `ເພີ່ມຂໍ້ມູນໃໝ່ສຳເລັດ: ${importedCount} ລາຍການ\n(ຂ້າມຂໍ້ມູນທີ່ຊ້ຳກັນ: ${duplicateCount} ລາຍການ)`, 'alert');
                 } catch (error) {
                     console.error(error);
@@ -744,39 +767,32 @@
                     if (text.includes("ຈັດສົ່ງສຳເລັດແລ້ວ")) noteText = "ຈັດສົ່ງສຳເລັດແລ້ວ";
                 }
 
-    // (ໂຄດສ່ວນເທິງຂອງ parseQuickText ຍັງຄົງເດີມຈົນຮອດການສ້າງ parsedData...)
                 const parsedData = {
                     date: depositDate, receiveDate: receiveDate, sender: senderName, senderPhone: senderPhone,
                     receiver: receiverName, receiverPhone: receiverPhone, itemName: itemName, total: totalPrice,
                     company: companyName, note: noteText
                 };
 
-                // 1. ກວດສອບວ່າບິນນີ້ຊ້ຳກັນຫຼືບໍ່
                 if (isDuplicate(parsedData, type)) {
-                    // ຖ້າຊ້ຳກັນ (ມີໃນລະບົບແລ້ວ): ຫ້າມບັນທຶກເດັດຂາດ ແລະ ແຈ້ງເຕືອນສີແດງ
                     statusText.innerHTML = "<strong>❌ ບິນນີ້ມີໃນລະບົບແລ້ວ! (ລະບົບປະຕິເສດການບັນທຶກຊ້ຳ)</strong>";
-                    statusText.style.color = "#EF4444"; // ສີແດງ
-                    
-                    // ໝາຍເຫດ: ບໍ່ລຶບຂໍ້ຄວາມໃນກ່ອງ ເພື່ອໃຫ້ຜູ້ໃຊ້ກວດເບິ່ງຄືນໄດ້
-                    return; // ຢຸດການເຮັດວຽກຂອງຟັງຊັນທັນທີ ບໍ່ໃຫ້ໄປຕໍ່
+                    statusText.style.color = "#EF4444"; 
+                    return; 
                 }
 
-                // 2. ຖ້າບໍ່ຊ້ຳກັນ (ເປັນບິນໃໝ່): ໃຫ້ບັນທຶກລົງຕາຕະລາງປົກກະຕິ
                 if (type === 'import') {
                     addRowToTable(parsedData);
-                    sortTableByDateDescending('import'); // ຈັດລຽງໃໝ່ສຸດຂຶ້ນເທິງ
+                    sortTableByDateDescending('import'); 
                     localStorage.setItem('family_import_data', document.getElementById('importTableBody').innerHTML);
                 } else {
                     addRowToTableExport(parsedData);
-                    sortTableByDateDescending('export'); // ຈັດລຽງໃໝ່ສຸດຂຶ້ນເທິງ
+                    sortTableByDateDescending('export'); 
                     localStorage.setItem('family_export_data', document.getElementById('exportTableBody').innerHTML);
                 }
                 
-                // ແຈ້ງເຕືອນວ່າສຳເລັດເປັນສີຂຽວ
                 statusText.innerHTML = "<strong>ບັນທຶກສຳເລັດ ✅ (" + companyName + ")</strong>";
-                statusText.style.color = "#10B981"; // ສີຂຽວ
+                statusText.style.color = "#10B981"; 
                 
-                textArea.value = ""; // ລຶບຂໍ້ຄວາມໃນກ່ອງຖິ້ມ ເມື່ອບັນທຶກສຳເລັດແລ້ວ
+                textArea.value = ""; 
 
             } catch (error) {
                 console.error(error);
@@ -996,7 +1012,6 @@
             const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
             const rows = document.querySelectorAll(`#${tableBodyId} tr`);
             
-            // ຟັງຊັນຊ່ວຍລຶບຍະຫວ່າງ, ວົງເລັບ ແລະ ລົງແຖວ ເພື່ອປຽບທຽບໃຫ້ຊັດເຈນ
             const clean = (str) => (str || '').toString().replace(/[\s\n\r\t(),]/g, '');
             
             const newDate = clean(data.date);
@@ -1015,16 +1030,15 @@
                 const rowItem = clean(cells[5].innerText);
                 const rowTotal = clean(cells[6].innerText);
                 
-                // ກວດສອບຖ້າ ວັນທີ, ຊື່+ເບີຜູ້ຝາກ, ຊື່+ເບີຜູ້ຮັບ, ຊື່ສິນຄ້າ ແລະ ລາຄາ ກົງກັນ ຖືວ່າຊ້ຳ
                 if (rowDate === newDate && 
                     rowSender === newSender && 
                     rowReceiver === newReceiver && 
                     rowItem === newItem && 
                     rowTotal === newTotal) {
-                    return true; // ພົບຂໍ້ມູນຊ້ຳກັນແລ້ວ
+                    return true; 
                 }
             }
-            return false; // ຍັງບໍ່ມີຂໍ້ມູນນີ້
+            return false; 
         }
 
 // ==========================================
@@ -1038,11 +1052,9 @@
             const rows = Array.from(tbody.querySelectorAll('tr'));
 
             rows.sort((a, b) => {
-                // ດຶງຂໍ້ມູນຈາກຄໍລຳທີ 2 (Index 1) ເຊິ່ງເປັນວັນທີນຳເຂົ້າ/ນຳອອກ
                 const dateA = a.cells[1].innerText.trim();
                 const dateB = b.cells[1].innerText.trim();
 
-                // ຟັງຊັນປ່ຽນ DD-MM-YYYY HH:mm ໃຫ້ເປັນ YYYY-MM-DD HH:mm ເພື່ອໃຫ້ປຽບທຽບໄດ້ງ່າຍ
                 const parseDate = (d) => {
                     if (!d || d === '-') return '0000-00-00 00:00';
                     const parts = d.split(' ');
@@ -1058,19 +1070,14 @@
                 const timeA = parseDate(dateA);
                 const timeB = parseDate(dateB);
 
-                // ປຽບທຽບ: ຖ້າ timeA ໃໝ່ກວ່າ ໃຫ້ເອົາຂຶ້ນເທິງ (-1)
                 if (timeA > timeB) return -1;
                 if (timeA < timeB) return 1;
                 return 0;
             });
 
-            // ຕໍ່ແຖວເຂົ້າໃນຕາຕະລາງຄືນຕາມລຳດັບໃໝ່
             rows.forEach(row => tbody.appendChild(row));
-            
-            // ອັບເດດເລກລຳດັບ (ລ/ດ) ໃໝ່ໃຫ້ລຽງແຕ່ 1, 2, 3...
             reindexRows(tableBodyId);
-        }
-
+        }      
     </script>
 </body>
 </html>
