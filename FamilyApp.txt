@@ -42,7 +42,7 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
     window.dbRef = ref;
     window.dbSet = set;
     window.dbOnValue = onValue;
-    window.dbGet = get; // ເພີ່ມ get ສຳລັບກວດສອບຂໍ້ມູນຄັ້ງທຳອິດ
+    window.dbGet = get;
     </script>
 
     <style>
@@ -163,11 +163,11 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
         <nav>
             <button class="tab-btn active" onclick="showSection('dashboard', this)">ໜ້າຫຼັກ</button>
-            <button class="tab-btn" onclick="showSection('wallet', this)">ກະເປົາເງິນ</button>
             <button class="tab-btn" onclick="showSection('import', this)">ນຳເຂົ້າສິນຄ້າ</button>
             <button class="tab-btn" onclick="showSection('export', this)">ນຳອອກສິນຄ້າ</button>
-            <button class="tab-btn" onclick="showSection('report', this)">ລາຍງານ</button>
+            <button class="tab-btn" onclick="showSection('wallet', this)">ຍຸດທະສາດການເງິນ</button>
             <button class="tab-btn" onclick="showSection('notice', this)">ກະດານຂ່າວ</button>
+            <button class="tab-btn" onclick="showSection('report', this)">ລາຍງານ</button>
         </nav>
 
         <main>
@@ -192,14 +192,19 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                             <h2 id="dashboardTotalBalance" style="font-size: 34px; margin: 0; text-shadow: 1px 2px 4px rgba(0,0,0,0.2); letter-spacing: 1px;">0</h2>
                         </div>
 
+                        <!-- ສະແດງລາຍຮັບ-ລາຍຈ່າຍເດືອນນີ້ -->
+                        <div style="background: rgba(0, 0, 0, 0.2); padding: 12px 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; backdrop-filter: blur(5px); margin-bottom: 10px;">
+                            <span>📈 ລາຍຮັບເດືອນນີ້:</span>
+                            <strong id="dashboardMonthlyIncome" style="color: #10B981; font-size: 16px;">0 ກີບ</strong>
+                        </div>
                         <div style="background: rgba(0, 0, 0, 0.2); padding: 12px 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; backdrop-filter: blur(5px);">
                             <span>📉 ລາຍຈ່າຍເດືອນນີ້:</span>
                             <strong id="dashboardMonthlyExpense" style="color: #FFD700; font-size: 16px;">0 ກີບ</strong>
                         </div>
 
                         <div class="admin-only" style="margin-top: 25px; display: flex; flex-direction: column; gap: 12px;">
-                            <button class="btn-action" style="margin: 0; background: #10B981; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;">+ ລາຍຮັບບັງເອີນ</button>
-                            <button class="btn-action" style="margin: 0; background: #EF4444; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;">- ລາຍຈ່າຍບັງເອີນ</button>
+                            <button class="btn-action" style="margin: 0; background: #10B981; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;" onclick="openMiscModal('income')">+ ລາຍຮັບບັງເອີນ</button>
+                            <button class="btn-action" style="margin: 0; background: #EF4444; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); font-weight: bold; font-size: 16px; padding: 12px; border-radius: 8px; transition: transform 0.2s;" onclick="openMiscModal('expense')">- ລາຍຈ່າຍບັງເອີນ</button>
                         </div>
                     </div>
                 </div>
@@ -210,12 +215,34 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 </div>
             </div>
 
+            <!-- ========================================= -->
+            <!-- 2. ໜ້າກົນຍຸດການເງິນ (Smart Advisor) -->
+            <!-- ========================================= -->
             <div id="wallet" class="content-section">
-                <h3>ກະເປົາເງິນ</h3>
-                <p>ໜ້າຈັດການການເງິນ...</p>
+                <h3 style="font-size: 20px; color: var(--text-dark); border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 20px;">🛡️ ຍຸດທະສາດ ແລະ ການວາງແຜນການເງິນຄອບຄົວ</h3>
+                
+                <div class="grid-container" style="margin-top: 0;">
+                    <!-- ບັອກ: ບັນຫາ -->
+                    <div class="card" style="border-left: 5px solid var(--danger); background: #FEF2F2;">
+                        <h4 style="color: var(--danger); margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #FCA5A5; padding-bottom: 8px;">⚠️ ສິ່ງທ້າທາຍ ແລະ ບັນຫາການເງິນ (ວິເຄາະອັດຕະໂນມັດ)</h4>
+                        <ul id="auto-problems" style="padding-left: 20px; line-height: 1.8; color: #4B5563; font-size: 15px;">
+                            <li>ກຳລັງວິເຄາະຂໍ້ມູນການເງິນຂອງທ່ານ...</li>
+                        </ul>
+                    </div>
+
+                    <!-- ບັອກ: ວິທີຮັບມື -->
+                    <div class="card" style="border-left: 5px solid var(--secondary); background: #F0FDF4;">
+                        <h4 style="color: var(--secondary); margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #86EFAC; padding-bottom: 8px;">💡 ວິທີຮັບມື ແລະ ສ້າງຄວາມໝັ້ນຄົງ (ແນະນຳອັດຕະໂນມັດ)</h4>
+                        <ul id="auto-solutions" style="padding-left: 20px; line-height: 1.8; color: #4B5563; font-size: 15px;">
+                            <li>ກຳລັງວິເຄາະຂໍ້ມູນການເງິນຂອງທ່ານ...</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
+            <!-- ========================================= -->
             <!-- 3. ໜ້ານຳເຂົ້າສິນຄ້າ -->
+            <!-- ========================================= -->
             <div id="import" class="content-section">
                 <div class="card" style="margin-bottom: 20px; background: #F8FAFC; border: 1px dashed var(--primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -235,7 +262,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>ຕາຕະລາງ ນຳເຂົ້າສິນຄ້າ</h3>
-                    <!-- ປຸ່ມລຶບຈະເຫັນສະເພາະ Admin ເທົ່ານັ້ນ -->
                     <div class="admin-only" style="display: flex; gap: 10px;">
                         <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('import')">🗑️ ລຶບຂໍ້ມູນ</button>
                     </div>
@@ -252,7 +278,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <th rowspan="2">ລາຄາລວມ</th>
                                 <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
                                 <th rowspan="2">ໝາຍເຫດ</th>
-                                <!-- ຄໍລຳ Checkbox ຈະສະແດງສະເພາະ Admin (ຕິດ class admin-cell ໄວ້) -->
                                 <th rowspan="2" class="admin-cell" style="width: 40px;"><input type="checkbox" id="selectAllImport" onclick="toggleAllCheckboxes('import')"></th>
                             </tr>
                             <tr>
@@ -269,7 +294,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <td id="grandTotal">0 ກີບ</td>
                                 <td></td>
                                 <td></td>
-                                <!-- ຫ້ອງວ່າງໃຕ້ Checkbox -->
                                 <td class="admin-cell"></td>
                             </tr>
                         </tfoot>
@@ -277,7 +301,9 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 </div>
             </div>
 
+            <!-- ========================================= -->
             <!-- 4. ໜ້ານຳອອກສິນຄ້າ -->
+            <!-- ========================================= -->
             <div id="export" class="content-section">
                 <div class="card" style="margin-bottom: 20px; background: #F8FAFC; border: 1px dashed var(--primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -297,7 +323,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>ຕາຕະລາງ ນຳອອກສິນຄ້າ</h3>
-                    <!-- ປຸ່ມລຶບຈະເຫັນສະເພາະ Admin ເທົ່ານັ້ນ -->
                     <div class="admin-only" style="display: flex; gap: 10px;">
                         <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('export')">🗑️ ລຶບຂໍ້ມູນ</button>
                     </div>
@@ -314,7 +339,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <th rowspan="2">ລາຄາລວມ</th>
                                 <th rowspan="2">ບໍລິສັດ (ຮັບ/ສົ່ງ)</th>
                                 <th rowspan="2">ໝາຍເຫດ</th>
-                                <!-- ຄໍລຳ Checkbox ຈະສະແດງສະເພາະ Admin (ຕິດ class admin-cell ໄວ້) -->
                                 <th rowspan="2" class="admin-cell" style="width: 40px;"><input type="checkbox" id="selectAllExport" onclick="toggleAllCheckboxes('export')"></th>
                             </tr>
                             <tr>
@@ -331,7 +355,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                                 <td id="grandTotalExport">0 ກີບ</td>
                                 <td></td>
                                 <td></td>
-                                <!-- ຫ້ອງວ່າງໃຕ້ Checkbox -->
                                 <td class="admin-cell"></td>
                             </tr>
                         </tfoot>
@@ -339,7 +362,9 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 </div>
             </div>
 
+            <!-- ========================================= -->
             <!-- 5. ໜ້າລາຍງານ -->
+            <!-- ========================================= -->
             <div id="report" class="content-section">
                 <h3 style="margin-bottom: 20px;">📊 ສະຫຼຸບລາຍງານການເງິນ (ນຳເຂົ້າ-ນຳອອກສິນຄ້າ)</h3>
                 <div class="card" style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
@@ -376,18 +401,150 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 </div>
             </div>
 
+            <!-- ========================================= -->
+            <!-- 6. ໜ້າກະດານຂ່າວ (ແນວໂນ້ມເສດຖະກິດ) -->
+            <!-- ========================================= -->
             <div id="notice" class="content-section">
-                <h3>ກະດານຂ່າວ</h3>
-                <p>ໜ້າປະກາດແຈ້ງເຕືອນ...</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="font-size: 20px; color: var(--text-dark); border-left: 4px solid var(--primary); padding-left: 12px; margin: 0;">📰 ກະດານຂ່າວ</h3>
+                </div>
+                <p style="color: #6B7280; font-size: 14px; margin-bottom: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px;">
+                    ສະຫຼຸບທ່າອ່ຽງການແຂງຕົວ-ອ່ອນຕົວ ຂອງຊັບສິນ ແລະ ຄາດຄະເນອະນາຄົດ ເພື່ອປະກອບການຕັດສິນໃຈ
+                </p>
+
+                <div class="grid-container" style="margin-top: 0;">
+                    <!-- Card 1: ເງິນຕາ (API) -->
+                    <div class="card" style="background: #F8FAFC;">
+                        <h4 style="display: flex; justify-content: space-between; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px; margin-bottom: 15px;">
+                            <span style="color: #1F2937;">💵 ສະກຸນເງິນຕາໂລກ (ອັບເດດ 24 ຊມ)</span>
+                            <button onclick="fetchExchangeRates()" style="background: none; border: none; cursor: pointer; font-size: 14px; color: var(--primary);">🔄 ໂຫຼດໃໝ່</button>
+                        </h4>
+                        <div style="line-height: 1.6; font-size: 15px;">
+                            <p style="margin-bottom: 10px;"><strong>ສະຖານະການປັດຈຸບັນ:</strong><br>
+                                ເງິນກີບຍັງຢູ່ໃນສະພາວະ <span style="color: var(--danger); font-weight: bold; background: #FEE2E2; padding: 2px 5px; border-radius: 4px;">ອ່ອນຕົວ 📉</span> ອັດຕາແລກປ່ຽນອ້າງອີງຈາກຕະຫຼາດໂລກ (Mid-Market Rate):
+                            </p>
+                            
+                            <ul style="list-style: none; padding: 0; margin-bottom: 15px; font-size: 14px; background: white; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB;">
+                                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB;">
+                                    <span>🇹🇭 1. ເງິນບາດໄທ (THB)</span>
+                                    <strong id="rate-THB" style="color: var(--info);">ກຳລັງໂຫຼດ...</strong>
+                                </li>
+                                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB;">
+                                    <span>🇺🇸 2. ໂດລາສະຫະລັດ (USD)</span>
+                                    <strong id="rate-USD" style="color: var(--info);">ກຳລັງໂຫຼດ...</strong>
+                                </li>
+                                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB;">
+                                    <span>🇨🇳 3. ຢວນຈີນ (CNY)</span>
+                                    <strong id="rate-CNY" style="color: var(--info);">ກຳລັງໂຫຼດ...</strong>
+                                </li>
+                                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5E7EB;">
+                                    <span>🇻🇳 4. ດົງຫວຽດນາມ (VND)</span>
+                                    <strong id="rate-VND" style="color: var(--info);">ກຳລັງໂຫຼດ...</strong>
+                                </li>
+                                <li style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                    <span>🇪🇺 5. ເອີໂຣ (EUR)</span>
+                                    <strong id="rate-EUR" style="color: var(--info);">ກຳລັງໂຫຼດ...</strong>
+                                </li>
+                            </ul>
+
+                            <p style="font-size: 12px; color: #9CA3AF; margin-bottom: 10px;">* ອັດຕາແລກປ່ຽນສາກົນ (ເງິນໂອນ) ອາດແຕກຕ່າງຈາກຮ້ານແລກປ່ຽນທົ່ວໄປເລັກນ້ອຍ.</p>
+                            <p><strong>ຄາດຄະເນອະນາຄົດ:</strong><br>
+                                ໄລຍະສັ້ນ-ກາງ ຍັງມີຄວາມຜັນຜວນສູງ. <strong style="color: var(--primary);">ຄຳແນະນຳ:</strong> ຄວນສຳຮອງເງິນຕາໄວ້ສະເພາະສຳລັບລາຍຈ່າຍທີ່ຈຳເປັນ.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: ຄຳ (API) -->
+                    <div class="card" style="background: #FFFBEB;">
+                        <h4 style="display: flex; justify-content: space-between; border-bottom: 2px solid #FDE68A; padding-bottom: 10px; margin-bottom: 15px;">
+                            <span style="color: #B45309;">🥇 ລາຄາຄຳຕະຫຼາດໂລກ (ອັບເດດ 24 ຊມ)</span>
+                            <button onclick="fetchGoldRates()" style="background: none; border: none; cursor: pointer; font-size: 14px; color: #B45309;">🔄 ໂຫຼດໃໝ່</button>
+                        </h4>
+                        <div style="line-height: 1.6; font-size: 15px;">
+                            <p style="margin-bottom: 10px;"><strong>ສະຖານະການປັດຈຸບັນ:</strong><br>
+                                ລາຄາຄຳ (Gold/XAU) ມີການ <span style="color: var(--secondary); font-weight: bold; background: #DCFCE7; padding: 2px 5px; border-radius: 4px;">ແຂງຕົວ 📈</span> ອ້າງອີງອັດຕາຊື້-ຂາຍ (ສະກຸນເງິນກີບ):
+                            </p>
+
+                            <ul style="list-style: none; padding: 0; margin-bottom: 15px; font-size: 14px; background: white; padding: 12px; border-radius: 8px; border: 1px solid #FDE68A;">
+                                <li style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #E5E7EB; color: #6B7280; font-size: 13px; font-weight: bold;">
+                                    <span>ນ້ຳໜັກຄຳ</span>
+                                    <span>ຮັບຊື້ (ກີບ) &nbsp;|&nbsp; ຂາຍອອກ (ກີບ)</span>
+                                </li>
+                                <li style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #E5E7EB;">
+                                    <strong>ຄຳ 1 ບາດ (15.24g)</strong>
+                                    <span style="color: var(--danger); font-weight: bold;">
+                                        <span id="gold-buy-baht">ໂຫຼດ...</span> | <span id="gold-sell-baht">ໂຫຼດ...</span>
+                                    </span>
+                                </li>
+                                <li style="display: flex; justify-content: space-between; padding: 12px 0;">
+                                    <strong>ຄຳ 1 ອອນສ໌ (1 Oz)</strong>
+                                    <span style="color: var(--danger); font-weight: bold;">
+                                        <span id="gold-buy-oz">ໂຫຼດ...</span> | <span id="gold-sell-oz">ໂຫຼດ...</span>
+                                    </span>
+                                </li>
+                            </ul>
+
+                            <p style="font-size: 12px; color: #9CA3AF; margin-bottom: 10px;">* ອ້າງອີງຈາກລາຄາ XAU ຕະຫຼາດໂລກ (1 Oz ≈ 2.04 ບາດ). ລາຄາຕົວຈິງອາດຕ່າງຈາກຮ້ານຄຳເລັກນ້ອຍ.</p>
+                            <p><strong>ຄາດຄະເນອະນາຄົດ:</strong><br>
+                                ທ່າອ່ຽງຍັງເປັນຂາຂຶ້ນໃນໄລຍະຍາວ. <strong style="color: var(--primary);">ຄຳແນະນຳ:</strong> ເໝາະສຳລັບການຊື້ເກັບທ້ອນເພື່ອຮັກສາມູນຄ່າຂອງເງິນ ຫຼາຍກວ່າການຊື້-ຂາຍໄລຍະສັ້ນ.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: ສະພາບເສດຖະກິດ -->
+                    <div class="card" style="background: #F4F6FF;">
+                        <h4 style="display: flex; justify-content: space-between; border-bottom: 2px solid #C7D2FE; padding-bottom: 10px; margin-bottom: 15px;">
+                            <span style="color: #4338CA;">📈 ອັດຕາເງິນເຟີ້ ແລະ ເສດຖະກິດ</span>
+                        </h4>
+                        <div style="line-height: 1.6; font-size: 15px;">
+                            <p style="margin-bottom: 10px;"><strong>ສະຖານະການປັດຈຸບັນ:</strong><br>
+                                ອັດຕາເງິນເຟີ້ຍັງສືບຕໍ່ກົດດັນຄ່າຄອງຊີບ ເຮັດໃຫ້ມູນຄ່າຂອງເງິນສົດທີ່ຖືຄອງໄວ້ຫຼຸດລົງ (ຊື້ເຄື່ອງໄດ້ໜ້ອຍລົງດ້ວຍຈຳນວນເງິນເທົ່າເດີມ).
+                            </p>
+                            <p><strong>ຄາດຄະເນອະນາຄົດ:</strong><br>
+                                ການຟື້ນຕົວຕ້ອງອາໄສເວລາ. <strong style="color: var(--primary);">ຄຳແນະນຳ:</strong> ການລົງທຶນໃນທຸລະກິດການຄ້າທີ່ສາມາດປັບລາຄາຂຶ້ນຕາມຕົ້ນທຶນ ຫຼື ການລົງທຶນທີ່ສ້າງກະແສເງິນສົດ (Cash Flow) ເຂົ້າຄອບຄົວເປັນປະຈຳ ຈະເປັນທາງລອດທີ່ດີທີ່ສຸດໃນຍຸກນີ້.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </main>
     </div> <!-- ປິດ appContainer -->
 
+    <!-- ========================================= -->
+    <!-- ປ໋ອບອັບສຳລັບ ລາຍຮັບ-ລາຍຈ່າຍບັງເອີນ -->
+    <!-- ========================================= -->
+    <div id="miscModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="miscModalTitle">ເພີ່ມລາຍການ</h3>
+            
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-weight: bold; font-size: 14px; color: var(--text-dark);">ວັນ/ເດືອນ/ປີ:</label>
+                <input type="date" id="miscDate" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border-color); border-radius: 5px; font-family: inherit; font-size: 16px;">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-weight: bold; font-size: 14px; color: var(--text-dark);">ລາຍລະອຽດ:</label>
+                <input type="text" id="miscDesc" placeholder="ເຊັ່ນ: ຖືກເລກ, ຊື້ເຄື່ອງໃຊ້, ຄ່າໄຟຟ້າ..." style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border-color); border-radius: 5px; font-family: inherit; font-size: 16px;">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-weight: bold; font-size: 14px; color: var(--text-dark);">ຈຳນວນເງິນ (ກີບ):</label>
+                <input type="text" id="miscAmount" placeholder="0" oninput="formatNumberInput(this)" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid var(--border-color); border-radius: 5px; font-family: inherit; font-size: 16px;">
+            </div>
+            
+            <input type="hidden" id="miscType">
+            <div class="modal-actions">
+                <button class="modal-btn btn-modal-cancel" onclick="closeMiscModal()">ຍົກເລີກ</button>
+                <button id="miscSaveBtn" class="modal-btn" style="color: white;" onclick="saveMiscData()">ບັນທຶກ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- JAVASCRIPT (ຄວບຄຸມການເຮັດວຽກທັງໝົດ) -->
+    <!-- ========================================= -->
     <script>
-        // ==========================================
-        // ລະບົບເຂົ້າສູ່ລະບົບ ແລະ ສິດທິການນຳໃຊ້ (Login & Roles)
-        // ==========================================
-        
         document.getElementById('loginPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') handleLogin();
         });
@@ -427,9 +584,11 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 document.getElementById('userRole').style.background = '#E5E7EB';
             }
             
-            // ເມື່ອເຂົ້າສູ່ລະບົບສຳເລັດຈຶ່ງດຶງຂໍ້ມູນຈາກ Firebase
+            // ເມື່ອເຂົ້າສູ່ລະບົບສຳເລັດຈຶ່ງດຶງຂໍ້ມູນຈາກ Firebase ແລະ API ຕ່າງໆ
             loadTableData();
             updateReportOptions();
+            fetchExchangeRates(); 
+            fetchGoldRates();     
         }
 
         function handleLogout() {
@@ -450,24 +609,18 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             }
         };
 
-        // ==========================================
-        // ຟັງຊັນບັນທຶກຂໍ້ມູນລົງ Firebase
-        // ==========================================
         function saveDataToFirebase(type) {
             if (type === 'import') {
                 const html = document.getElementById('importTableBody').innerHTML;
                 window.dbSet(window.dbRef(window.db, 'family_data/import'), html);
-                localStorage.setItem('family_import_data', html); // ແບັກອັບລົງເຄື່ອງໄວ້ນຳ
+                localStorage.setItem('family_import_data', html); 
             } else {
                 const html = document.getElementById('exportTableBody').innerHTML;
                 window.dbSet(window.dbRef(window.db, 'family_data/export'), html);
-                localStorage.setItem('family_export_data', html); // ແບັກອັບລົງເຄື່ອງໄວ້ນຳ
+                localStorage.setItem('family_export_data', html); 
             }
         }
 
-        // ==========================================
-        // ລະບົບປ໋ອບອັບ (Custom Dialog)
-        // ==========================================
         function customAlert(title, message, type = 'alert', onConfirm = null) {
             const modal = document.getElementById('customModal');
             const confirmBtn = document.getElementById('modalConfirmBtn');
@@ -507,41 +660,39 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             btnElement.classList.add('active');
         }
 
-        // ==========================================
-        // ດຶງຂໍ້ມູນອອນລາຍ ແລະ ຍ້າຍຂໍ້ມູນຈາກ Local (Auto-Migration)
-        // ==========================================
         function loadTableData() {
-            // 1. ກວດສອບຖ້າ Firebase ຫວ່າງເປົ່າ ແຕ່ໃນເຄື່ອງມີຂໍ້ມູນເກົ່າ ໃຫ້ດັນຂຶ້ນໄປ
+            // ດຶງຂໍ້ມູນຈາກເຄື່ອງກ່ອນເພື່ອແກ້ໜ້າຈໍກະພິບ
+            const localImport = localStorage.getItem('family_import_data');
+            if (localImport) document.getElementById('importTableBody').innerHTML = localImport;
+            
+            const localExport = localStorage.getItem('family_export_data');
+            if (localExport) document.getElementById('exportTableBody').innerHTML = localExport;
+            
+            updateTotalSum();
+            updateTotalSumExport();
+
             window.dbGet(window.dbRef(window.db, 'family_data/import')).then((snapshot) => {
-                if (!snapshot.exists()) {
-                    const localData = localStorage.getItem('family_import_data');
-                    if (localData) window.dbSet(window.dbRef(window.db, 'family_data/import'), localData);
-                }
+                if (!snapshot.exists() && localImport) window.dbSet(window.dbRef(window.db, 'family_data/import'), localImport);
             });
             window.dbGet(window.dbRef(window.db, 'family_data/export')).then((snapshot) => {
-                if (!snapshot.exists()) {
-                    const localData = localStorage.getItem('family_export_data');
-                    if (localData) window.dbSet(window.dbRef(window.db, 'family_data/export'), localData);
-                }
+                if (!snapshot.exists() && localExport) window.dbSet(window.dbRef(window.db, 'family_data/export'), localExport);
             });
 
-            // 2. ດຶງຂໍ້ມູນ ນຳເຂົ້າ ຈາກ Firebase (Realtime)
             window.dbOnValue(window.dbRef(window.db, 'family_data/import'), (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
+                if (data !== null) { 
                     document.getElementById('importTableBody').innerHTML = data;
-                    fixOldDataMissingCheckboxes('importTableBody', 'import', false); // ບໍ່ຕ້ອງ Save ຊ້ຳ
+                    fixOldDataMissingCheckboxes('importTableBody', 'import', false); 
                     sortTableByDateDescending('import'); 
                     updateTotalSum();
                 }
             });
 
-            // 3. ດຶງຂໍ້ມູນ ນຳອອກ ຈາກ Firebase (Realtime)
             window.dbOnValue(window.dbRef(window.db, 'family_data/export'), (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
+                if (data !== null) {
                     document.getElementById('exportTableBody').innerHTML = data;
-                    fixOldDataMissingCheckboxes('exportTableBody', 'export', false); // ບໍ່ຕ້ອງ Save ຊ້ຳ
+                    fixOldDataMissingCheckboxes('exportTableBody', 'export', false); 
                     sortTableByDateDescending('export'); 
                     updateTotalSumExport();
                 }
@@ -593,11 +744,13 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             let totalIncome = 0;
             let totalExpense = 0;
             let thisMonthExpense = 0;
+            let thisMonthIncome = 0; 
             
             const now = new Date();
             const currentMonth = now.getMonth() + 1;
             const currentYear = now.getFullYear();
 
+            // ຄິດໄລ່ ລາຍຈ່າຍ
             document.querySelectorAll('#import table tbody .item-total').forEach(cell => {
                 const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
                 totalExpense += amount;
@@ -618,17 +771,82 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 }
             });
 
+            // ຄິດໄລ່ ລາຍຮັບ
             document.querySelectorAll('#export table tbody .item-total-export').forEach(cell => {
                 const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
                 totalIncome += amount;
+                
+                const row = cell.closest('tr');
+                if(row.cells.length > 2) {
+                    const dateStr = row.cells[2].innerText.trim();
+                    if (dateStr !== "-" && dateStr !== "") {
+                        const parts = dateStr.split('-');
+                        if (parts.length === 3) {
+                            const rowMonth = parseInt(parts[1], 10);
+                            const rowYear = parseInt(parts[2], 10);
+                            if (rowMonth === currentMonth && rowYear === currentYear) {
+                                thisMonthIncome += amount;
+                            }
+                        }
+                    }
+                }
             });
 
             const netBalance = totalIncome - totalExpense;
 
+            // ອັບເດດຕົວເລກສະແດງຜົນເທິງຈໍ
             document.getElementById('dashboardTotalBalance').innerText = netBalance.toLocaleString();
+            
+            if (document.getElementById('dashboardMonthlyIncome')) {
+                document.getElementById('dashboardMonthlyIncome').innerText = thisMonthIncome.toLocaleString() + ' ກີບ';
+            }
+            
             document.getElementById('dashboardMonthlyExpense').innerText = thisMonthExpense.toLocaleString() + ' ກີບ';
+
+            // ເອີ້ນໃຊ້ລະບົບວິເຄາະຍຸດທະສາດອັດຕະໂນມັດ ໂດຍສົ່ງຂໍ້ມູນການເງິນໄປໃຫ້ (ຕ້ອງວາງໄວ້ລຸ່ມສຸດຂອງຟັງຊັນນີ້)
+            generateAutoStrategy(netBalance, thisMonthIncome, thisMonthExpense);
         }
 
+        // ==========================================
+        // ຟັງຊັນວິເຄາະ ແລະ ແນະນຳຍຸດທະສາດການເງິນອັດຕະໂນມັດ
+        // ==========================================
+        function generateAutoStrategy(netBalance, thisMonthIncome, thisMonthExpense) {
+            const probUl = document.getElementById('auto-problems');
+            const solUl = document.getElementById('auto-solutions');
+            if (!probUl || !solUl) return;
+
+            let problems = [];
+            let solutions = [];
+
+            if (thisMonthExpense > thisMonthIncome) {
+                problems.push("<strong>ລາຍຈ່າຍເດືອນນີ້ສູງກວ່າລາຍຮັບ:</strong> ງົບປະມານປະຈຳເດືອນກຳລັງຕິດລົບ 🚨 ເຊິ່ງອາດເຮັດໃຫ້ຕ້ອງດຶງເງິນທ້ອນອອກມາໃຊ້.");
+                solutions.push("<strong>ຄວບຄຸມລາຍຈ່າຍດ່ວນ:</strong> ງົດການຊື້ສິນຄ້າທີ່ບໍ່ຈຳເປັນ (Wants) ໃນທ້າຍເດືອນນີ້ ແລະ ຕັດລາຍຈ່າຍແຝງອອກທັນທີ.");
+            } else if (thisMonthIncome > 0 && thisMonthIncome >= thisMonthExpense) {
+                problems.push("<strong>ຄວາມສ່ຽງຈາກເງິນເຟີ້:</strong> ເດືອນນີ້ຄອບຄົວມີເງິນເຫຼືອ ແຕ່ການເກັບເປັນເງິນສົດໄວ້ລ້າໆ ອາດເຮັດໃຫ້ມູນຄ່າຫຼຸດລົງໃນອະນາຄົດ.");
+                solutions.push("<strong>ການຈັດສັນເງິນເຫຼືອ:</strong> ແບ່ງເງິນທີ່ເຫຼືອຈາກເດືອນນີ້ໄປທ້ອນເປັນກອງທຶນສຸກເສີນ ຫຼື ຊື້ຊັບສິນປອດໄພ (ເຊັ່ນ: ຄຳ ຫຼື ເງິນຕາ) ເພື່ອຮັກສາມູນຄ່າ.");
+            } else {
+                problems.push("<strong>ຍັງບໍ່ມີຂໍ້ມູນການເງິນໃນເດືອນນີ້:</strong> ລະບົບຍັງບໍ່ສາມາດວິເຄາະພຶດຕິກຳການໃຊ້ຈ່າຍຂອງທ່ານໄດ້ຊັດເຈນ.");
+                solutions.push("<strong>ເລີ່ມຕົ້ນບັນທຶກ:</strong> ໝັ່ນບັນທຶກລາຍຮັບ-ລາຍຈ່າຍທຸກຄັ້ງ ເພື່ອໃຫ້ລະບົບຊ່ວຍວາງແຜນການເງິນໄດ້ຢ່າງແມ່ນຍຳ.");
+            }
+
+            if (netBalance < 0) {
+                problems.push("<strong>ສະຖານະພາບການເງິນລວມຕິດລົບ 📉:</strong> ຄອບຄົວກຳລັງມີລາຍຈ່າຍສະສົມຫຼາຍກວ່າລາຍຮັບ ອາດນຳໄປສູ່ບັນຫາໜີ້ສິນ.");
+                solutions.push("<strong>ຢຸດສ້າງໜີ້ໃໝ່:</strong> ໂຟກັສໃສ່ການຫາລາຍຮັບເສີມ ແລະ ຫຼຸດຜ່ອນໜີ້ສິນກ່ອນເປັນອັນດັບທຳອິດ.");
+            } else if (netBalance > 5000000) { 
+                problems.push("<strong>ສະພາບຄ່ອງລວມຢູ່ໃນເກນດີ ແຕ່ປະເຊີນຄ່າເງິນອ່ອນຕົວ:</strong> ຍອດເງິນລວມມີຫຼາຍ ແຕ່ຖ້າເກັບເປັນເງິນກີບໄວ້ບ່ອນດຽວອາດເສຍປຽບ.");
+                solutions.push("<strong>ກະຈາຍຄວາມສ່ຽງ (Diversification):</strong> ຄວນແບ່ງເງິນທ້ອນບາງສ່ວນໄປລົງທຶນ ຫຼື ສ້າງທຸລະກິດເພື່ອສ້າງ Passive Income.");
+            }
+
+            problems.push("<strong>ຄ່າຄອງຊີບສູງຂຶ້ນ:</strong> ລາຄາສິນຄ້າອຸປະໂພກ-ບໍລິໂພກປັບຕົວຂຶ້ນ ກະທົບຕໍ່ລາຍຈ່າຍປະຈຳວັນໂດຍກົງ.");
+            solutions.push("<strong>ການຈັດສັນງົບປະມານຢ່າງຮັດກຸມ:</strong> ຕັດລາຍຈ່າຍທີ່ບໍ່ຈຳເປັນ ແລະ ກຽມກອງທຶນສຸກເສີນໃຫ້ພໍໃຊ້ຈ່າຍຢ່າງໜ້ອຍ 3 ເດືອນ.");
+
+            probUl.innerHTML = problems.map(p => `<li style="margin-bottom: 10px;">${p}</li>`).join('');
+            solUl.innerHTML = solutions.map(s => `<li style="margin-bottom: 10px;">${s}</li>`).join('');
+        }
+
+        // ==========================================
+        // ການຈັດການ Excel ແລະ Quick Text
+        // ==========================================
         function handleExcelUpload(event, type) {
             const file = event.target.files[0];
             if (!file) return;
@@ -674,8 +892,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                     }
 
                     sortTableByDateDescending(type);
-
-                    // ປ່ຽນຈາກ LocalStorage ມາໃຊ້ Firebase
                     saveDataToFirebase(type);
 
                     customAlert('ສຳເລັດ', `ເພີ່ມຂໍ້ມູນໃໝ່ສຳເລັດ: ${importedCount} ລາຍການ\n(ຂ້າມຂໍ້ມູນທີ່ຊ້ຳກັນ: ${duplicateCount} ລາຍການ)`, 'alert');
@@ -832,11 +1048,11 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 if (type === 'import') {
                     addRowToTable(parsedData);
                     sortTableByDateDescending('import'); 
-                    saveDataToFirebase('import'); // ປ່ຽນມາໃຊ້ Firebase
+                    saveDataToFirebase('import'); 
                 } else {
                     addRowToTableExport(parsedData);
                     sortTableByDateDescending('export'); 
-                    saveDataToFirebase('export'); // ປ່ຽນມາໃຊ້ Firebase
+                    saveDataToFirebase('export'); 
                 }
                 
                 statusText.innerHTML = "<strong>ບັນທຶກສຳເລັດ ✅ (" + companyName + ")</strong>";
@@ -851,6 +1067,9 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             }
         }
 
+        // ==========================================
+        // ຟັງຊັນຈັດການຕາຕະລາງ ແລະ ອື່ນໆ
+        // ==========================================
         function addRowToTable(data) {
             const tableBody = document.getElementById('importTableBody');
             const rowCount = tableBody.rows.length + 1;
@@ -933,10 +1152,10 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
                 reindexRows(tableBodyId);
 
                 if (type === 'import') {
-                    saveDataToFirebase('import'); // ປ່ຽນມາໃຊ້ Firebase
+                    saveDataToFirebase('import'); 
                     updateTotalSum();
                 } else {
-                    saveDataToFirebase('export'); // ປ່ຽນມາໃຊ້ Firebase
+                    saveDataToFirebase('export'); 
                     updateTotalSumExport();
                 }
                 
@@ -1055,9 +1274,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             reportTableFoot.style.display = 'table-row-group';
         }
 
-// ==========================================
-// ຟັງຊັນກວດສອບຂໍ້ມູນຊ້ຳກັນໃນຕາຕະລາງ
-// ==========================================
         function isDuplicate(data, type) {
             const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
             const rows = document.querySelectorAll(`#${tableBodyId} tr`);
@@ -1091,9 +1307,6 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
             return false; 
         }
 
-// ==========================================
-// ຟັງຊັນຈັດລຽງວັນທີໃໝ່ສຸດຂຶ້ນເທິງ (Newest to Oldest)
-// ==========================================
         function sortTableByDateDescending(type) {
             const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
             const tbody = document.getElementById(tableBodyId);
@@ -1127,7 +1340,157 @@ https://console.firebase.google.com/u/0/project/posxiong-pos/firestore/databases
 
             rows.forEach(row => tbody.appendChild(row));
             reindexRows(tableBodyId);
-        }      
+        }
+
+        // ==========================================
+        // ຟັງຊັນປ໋ອບອັບ လາຍຮັບ-ລາຍຈ່າຍບັງເອີນ
+        // ==========================================
+        function openMiscModal(type) {
+            const modal = document.getElementById('miscModal');
+            const title = document.getElementById('miscModalTitle');
+            const saveBtn = document.getElementById('miscSaveBtn');
+            const typeInput = document.getElementById('miscType');
+
+            typeInput.value = type;
+            document.getElementById('miscDesc').value = '';
+            document.getElementById('miscAmount').value = '';
+
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            document.getElementById('miscDate').value = `${yyyy}-${mm}-${dd}`; 
+
+            if (type === 'income') {
+                title.innerText = '💰 ເພີ່ມລາຍຮັບບັງເອີນ';
+                saveBtn.style.background = '#10B981'; 
+            } else {
+                title.innerText = '💸 ເພີ່ມລາຍຈ່າຍບັງເອີນ';
+                saveBtn.style.background = '#EF4444'; 
+            }
+            modal.classList.add('active');
+        }
+
+        function closeMiscModal() {
+            document.getElementById('miscModal').classList.remove('active');
+        }
+
+        function saveMiscData() {
+            const type = document.getElementById('miscType').value;
+            const dateInput = document.getElementById('miscDate').value;
+            const desc = document.getElementById('miscDesc').value.trim();
+            const rawAmount = document.getElementById('miscAmount').value.trim();
+            const amount = rawAmount.replace(/,/g, '');
+
+            if (!dateInput || !desc || !amount) {
+                alert('ກະລຸນາປ້ອນຂໍ້ມູນໃຫ້ຄົບຖ້ວນທຸກຊ່ອງ!');
+                return;
+            }
+
+            const dateParts = dateInput.split('-');
+            const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+            
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const finalDateStr = `${formattedDate} ${hours}:${minutes}`;
+
+            const parsedData = {
+                date: finalDateStr, 
+                receiveDate: finalDateStr, 
+                sender: type === 'income' ? 'ລາຍຮັບບັງເອີນ' : 'ລາຍຈ່າຍບັງເອີນ', 
+                senderPhone: '-',
+                receiver: 'ຄອບຄົວ', 
+                receiverPhone: '-', 
+                itemName: desc, 
+                total: Number(amount).toLocaleString(), 
+                company: '-', 
+                note: 'ບັນທຶກເອງ (Manual)'
+            };
+
+            if (type === 'income') {
+                addRowToTableExport(parsedData);
+                sortTableByDateDescending('export');
+                saveDataToFirebase('export'); 
+            } else {
+                addRowToTable(parsedData);
+                sortTableByDateDescending('import');
+                saveDataToFirebase('import'); 
+            }
+
+            closeMiscModal(); 
+            customAlert('ສຳເລັດ', 'ບັນທຶກລາຍການສຳເລັດແລ້ວ ✅', 'alert'); 
+        }
+
+        function formatNumberInput(input) {
+            let value = input.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+            if (value) {
+                input.value = parseInt(value, 10).toLocaleString();
+            } else {
+                input.value = '';
+            }
+        }
+
+        // ==========================================
+        // ຟັງຊັນດຶງອັດຕາແລກປ່ຽນ ແລະ ຄຳ 24/7 (API)
+        // ==========================================
+        async function fetchExchangeRates() {
+            try {
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await response.json();
+                
+                if (data && data.rates && data.rates.LAK) {
+                    const rates = data.rates;
+                    const lak = rates.LAK; 
+                    
+                    const usdToLak = lak;
+                    const thbToLak = lak / rates.THB;
+                    const cnyToLak = lak / rates.CNY;
+                    const eurToLak = lak / rates.EUR;
+                    const vnd1000ToLak = (lak / rates.VND) * 1000;
+
+                    document.getElementById('rate-THB').innerHTML = `1 THB = ${thbToLak.toLocaleString('en-US', {maximumFractionDigits: 2})} ₭`;
+                    document.getElementById('rate-USD').innerHTML = `1 USD = ${usdToLak.toLocaleString('en-US', {maximumFractionDigits: 0})} ₭`;
+                    document.getElementById('rate-CNY').innerHTML = `1 CNY = ${cnyToLak.toLocaleString('en-US', {maximumFractionDigits: 2})} ₭`;
+                    document.getElementById('rate-VND').innerHTML = `1,000 VND = ${vnd1000ToLak.toLocaleString('en-US', {maximumFractionDigits: 2})} ₭`;
+                    document.getElementById('rate-EUR').innerHTML = `1 EUR = ${eurToLak.toLocaleString('en-US', {maximumFractionDigits: 2})} ₭`;
+                }
+            } catch (error) {
+                console.error('ບໍ່ສາມາດດຶງຂໍ້ມູນອັດຕາແລກປ່ຽນໄດ້:', error);
+                document.getElementById('rate-THB').innerHTML = 'ເຊື່ອມຕໍ່ລົ້ມເຫຼວ ❌';
+            }
+        }
+
+        async function fetchGoldRates() {
+            try {
+                const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json');
+                const data = await response.json();
+                
+                if (data && data.xau && data.xau.lak) {
+                    const xauToLak = data.xau.lak; 
+                    
+                    const bahtToLak = xauToLak / 2.0404;
+                    const spreadBaht = 250000;
+                    const buyBaht = bahtToLak - spreadBaht;
+                    const sellBaht = bahtToLak + spreadBaht;
+
+                    const spreadOz = spreadBaht * 2.0404; 
+                    const buyOz = xauToLak - spreadOz;
+                    const sellOz = xauToLak + spreadOz;
+
+                    document.getElementById('gold-buy-baht').innerText = buyBaht.toLocaleString('en-US', {maximumFractionDigits: 0});
+                    document.getElementById('gold-sell-baht').innerText = sellBaht.toLocaleString('en-US', {maximumFractionDigits: 0});
+                    
+                    document.getElementById('gold-buy-oz').innerText = buyOz.toLocaleString('en-US', {maximumFractionDigits: 0});
+                    document.getElementById('gold-sell-oz').innerText = sellOz.toLocaleString('en-US', {maximumFractionDigits: 0});
+                }
+            } catch (error) {
+                console.error('ບໍ່ສາມາດດຶງລາຄາຄຳໄດ້:', error);
+                document.getElementById('gold-buy-baht').innerText = 'Error';
+                document.getElementById('gold-sell-baht').innerText = 'Error';
+            }
+        }
+
     </script>
 </body>
 </html>

@@ -650,7 +650,7 @@
         }
 
         function loadTableData() {
-            // ດຶງຂໍ້ມູນຈາກເຄື່ອງກ່ອນເພື່ອແກ້ໜ້າຈໍກະພິບ
+            // 1. ແກ້ບັນຫາໜ້າຈໍກະພິບ ໂດຍດຶງຂໍ້ມູນໃນເຄື່ອງມາສະແດງກ່ອນ (ຖ້າມີ)
             const localImport = localStorage.getItem('family_import_data');
             if (localImport) document.getElementById('importTableBody').innerHTML = localImport;
             
@@ -660,29 +660,34 @@
             updateTotalSum();
             updateTotalSumExport();
 
-            window.dbGet(window.dbRef(window.db, 'family_data/import')).then((snapshot) => {
-                if (!snapshot.exists() && localImport) window.dbSet(window.dbRef(window.db, 'family_data/import'), localImport);
-            });
-            window.dbGet(window.dbRef(window.db, 'family_data/export')).then((snapshot) => {
-                if (!snapshot.exists() && localExport) window.dbSet(window.dbRef(window.db, 'family_data/export'), localExport);
-            });
-
-            window.dbOnValue(window.dbRef(window.db, 'family_data/import'), (snapshot) => {
-                const data = snapshot.val();
-                if (data !== null) { 
-                    document.getElementById('importTableBody').innerHTML = data;
-                    fixOldDataMissingCheckboxes('importTableBody', 'import', false); 
-                    sortTableByDateDescending('import'); 
-                    updateTotalSum();
+            // 2. ກວດສອບຖ້າ Firebase ຫວ່າງເປົ່າ ໃຫ້ດັນຂໍ້ມູນຈາກເຄື່ອງຂຶ້ນໄປ
+            window.dbGet(window.dbRef(window.db, 'family_data')).then((snapshot) => {
+                if (!snapshot.exists()) {
+                    if (localImport) window.dbSet(window.dbRef(window.db, 'family_data/import'), localImport);
+                    if (localExport) window.dbSet(window.dbRef(window.db, 'family_data/export'), localExport);
                 }
             });
 
-            window.dbOnValue(window.dbRef(window.db, 'family_data/export'), (snapshot) => {
+            // 3. ດຶງຂໍ້ມູນທັງໝົດພ້ອມກັນບາດດຽວ (ລາຍຮັບ ແລະ ລາຍຈ່າຍ) ມາອັບເດດພ້ອມກັນ
+            window.dbOnValue(window.dbRef(window.db, 'family_data'), (snapshot) => {
                 const data = snapshot.val();
-                if (data !== null) {
-                    document.getElementById('exportTableBody').innerHTML = data;
-                    fixOldDataMissingCheckboxes('exportTableBody', 'export', false); 
-                    sortTableByDateDescending('export'); 
+                if (data) {
+                    // ອັບເດດຕາຕະລາງລາຍຈ່າຍ (ນຳເຂົ້າ)
+                    if (data.import !== undefined) {
+                        document.getElementById('importTableBody').innerHTML = data.import;
+                        fixOldDataMissingCheckboxes('importTableBody', 'import', false); 
+                        sortTableByDateDescending('import'); 
+                    }
+                    
+                    // ອັບເດດຕາຕະລາງລາຍຮັບ (ນຳອອກ)
+                    if (data.export !== undefined) {
+                        document.getElementById('exportTableBody').innerHTML = data.export;
+                        fixOldDataMissingCheckboxes('exportTableBody', 'export', false); 
+                        sortTableByDateDescending('export'); 
+                    }
+
+                    // ເມື່ອຕາຕະລາງທັງ 2 ໂຫຼດສຳເລັດພ້ອມກັນແລ້ວ ຈຶ່ງສັ່ງຄິດໄລ່ຍອດເງິນລວມ
+                    updateTotalSum();
                     updateTotalSumExport();
                 }
             });
