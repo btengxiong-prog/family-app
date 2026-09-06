@@ -249,14 +249,21 @@
                     </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>ຕາຕະລາງ ນຳເຂົ້າສິນຄ້າ</h3>
-                    <div class="admin-only" style="display: flex; gap: 10px;">
-                        <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('import')">🗑️ ລຶບຂໍ້ມູນ</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0;">ຕາຕະລາງ ນຳເຂົ້າສິນຄ້າ</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="filterCompanyImport" onchange="filterTable('import')" style="padding: 8px 10px; border-radius: 5px; border: 1px solid var(--border-color); font-family: inherit; font-size: 14px; background-color: white; min-width: 150px; cursor: pointer;">
+                            <option value="all">ສະແດງທັງໝົດ</option>
+                            <option value="ຮຸ່ງອາລຸນ">🚚 ຮຸ່ງອາລຸນ</option>
+                            <option value="ອານຸສິດ">📦 ອານຸສິດ</option>
+                        </select>
+                        <div class="admin-only">
+                            <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('import')">🗑️ ລຶບຂໍ້ມູນ</button>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div class="table-responsive" style="margin-top: 0;">
                     <table>
                         <thead>
                             <tr>
@@ -310,14 +317,21 @@
                     </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>ຕາຕະລາງ ນຳອອກສິນຄ້າ</h3>
-                    <div class="admin-only" style="display: flex; gap: 10px;">
-                        <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('export')">🗑️ ລຶບຂໍ້ມູນ</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="margin: 0;">ຕາຕະລາງ ນຳອອກສິນຄ້າ</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="filterCompanyExport" onchange="filterTable('export')" style="padding: 8px 10px; border-radius: 5px; border: 1px solid var(--border-color); font-family: inherit; font-size: 14px; background-color: white; min-width: 150px; cursor: pointer;">
+                            <option value="all">ສະແດງທັງໝົດ</option>
+                            <option value="ຮຸ່ງອາລຸນ">🚚 ຮຸ່ງອາລຸນ</option>
+                            <option value="ອານຸສິດ">📦 ອານຸສິດ</option>
+                        </select>
+                        <div class="admin-only">
+                            <button class="btn-action btn-danger" style="width: auto; margin: 0;" onclick="deleteData('export')">🗑️ ລຶບຂໍ້ມູນ</button>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="table-responsive">
+                <div class="table-responsive" style="margin-top: 0;">
                     <table>
                         <thead>
                             <tr>
@@ -652,13 +666,16 @@
         function loadTableData() {
             // 1. ແກ້ບັນຫາໜ້າຈໍກະພິບ ໂດຍດຶງຂໍ້ມູນໃນເຄື່ອງມາສະແດງກ່ອນ (ຖ້າມີ)
             const localImport = localStorage.getItem('family_import_data');
-            if (localImport) document.getElementById('importTableBody').innerHTML = localImport;
+            if (localImport) {
+                document.getElementById('importTableBody').innerHTML = localImport;
+                filterTable('import');
+            }
             
             const localExport = localStorage.getItem('family_export_data');
-            if (localExport) document.getElementById('exportTableBody').innerHTML = localExport;
-            
-            updateTotalSum();
-            updateTotalSumExport();
+            if (localExport) {
+                document.getElementById('exportTableBody').innerHTML = localExport;
+                filterTable('export');
+            }
 
             // 2. ກວດສອບຖ້າ Firebase ຫວ່າງເປົ່າ ໃຫ້ດັນຂໍ້ມູນຈາກເຄື່ອງຂຶ້ນໄປ
             window.dbGet(window.dbRef(window.db, 'family_data')).then((snapshot) => {
@@ -677,6 +694,7 @@
                         document.getElementById('importTableBody').innerHTML = data.import;
                         fixOldDataMissingCheckboxes('importTableBody', 'import', false); 
                         sortTableByDateDescending('import'); 
+                        filterTable('import'); // ນຳໃຊ້ຕົວກອງຫຼັງຈາກໂຫຼດຂໍ້ມູນ
                     }
                     
                     // ອັບເດດຕາຕະລາງລາຍຮັບ (ນຳອອກ)
@@ -684,11 +702,8 @@
                         document.getElementById('exportTableBody').innerHTML = data.export;
                         fixOldDataMissingCheckboxes('exportTableBody', 'export', false); 
                         sortTableByDateDescending('export'); 
+                        filterTable('export'); // ນຳໃຊ້ຕົວກອງຫຼັງຈາກໂຫຼດຂໍ້ມູນ
                     }
-
-                    // ເມື່ອຕາຕະລາງທັງ 2 ໂຫຼດສຳເລັດພ້ອມກັນແລ້ວ ຈຶ່ງສັ່ງຄິດໄລ່ຍອດເງິນລວມ
-                    updateTotalSum();
-                    updateTotalSumExport();
                 }
             });
             
@@ -723,12 +738,48 @@
 
         function formatDateToDDMMYYYY(dateStr) {
             if (!dateStr || dateStr === "-") return "-";
-            const parts = dateStr.split(/[-/]/);
+            
+            // ຕັດເວລາອອກ ໂດຍການແຍກດ້ວຍຍະຫວ່າງ ແລ້ວເອົາສະເພາະສ່ວນໜ້າ (ວັນທີ)
+            let dateOnly = dateStr.toString().trim().split(' ')[0];
+            
+            const parts = dateOnly.split(/[-/]/);
             if (parts.length === 3) {
                 if (parts[0].length === 4) return `${parts[2]}-${parts[1]}-${parts[0]}`;
                 return `${parts[0]}-${parts[1]}-${parts[2]}`;
             }
-            return dateStr;
+            return dateOnly;
+        }
+
+        // ==========================================
+        // ຟັງຊັນຕົວກອງບໍລິສັດຂົນສົ່ງ (Filter)
+        // ==========================================
+        function filterTable(type) {
+            const selectId = type === 'import' ? 'filterCompanyImport' : 'filterCompanyExport';
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const filterValue = document.getElementById(selectId).value;
+            const tbody = document.getElementById(tableBodyId);
+            
+            if (!tbody) return;
+            const rows = tbody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                // ຖັນທີ 7 (Index 7) ແມ່ນຊື່ບໍລິສັດ
+                const companyCell = row.cells.length > 7 ? row.cells[7].innerText.trim() : "";
+                
+                if (filterValue === 'all' || companyCell.includes(filterValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            reindexRows(tableBodyId);
+            
+            if (type === 'import') {
+                updateTotalSum();
+            } else {
+                updateTotalSumExport();
+            }
         }
 
         // ==========================================
@@ -744,7 +795,7 @@
             const currentMonth = now.getMonth() + 1;
             const currentYear = now.getFullYear();
 
-            // ຄິດໄລ່ ລາຍຈ່າຍ
+            // ຄິດໄລ່ ລາຍຈ່າຍ (ນັບທັງໝົດ ບໍ່ສົນໃຈການກັ່ນຕອງ)
             document.querySelectorAll('#import table tbody .item-total').forEach(cell => {
                 const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
                 totalExpense += amount;
@@ -765,7 +816,7 @@
                 }
             });
 
-            // ຄິດໄລ່ ລາຍຮັບ
+            // ຄິດໄລ່ ລາຍຮັບ (ນັບທັງໝົດ ບໍ່ສົນໃຈການກັ່ນຕອງ)
             document.querySelectorAll('#export table tbody .item-total-export').forEach(cell => {
                 const amount = parseFloat(cell.innerText.replace(/,/g, '')) || 0;
                 totalIncome += amount;
@@ -797,7 +848,7 @@
             
             document.getElementById('dashboardMonthlyExpense').innerText = thisMonthExpense.toLocaleString() + ' ກີບ';
 
-            // ເອີ້ນໃຊ້ລະບົບວິເຄາະຍຸດທະສາດອັດຕະໂນມັດ ໂດຍສົ່ງຂໍ້ມູນການເງິນໄປໃຫ້ (ຕ້ອງວາງໄວ້ລຸ່ມສຸດຂອງຟັງຊັນນີ້)
+            // ເອີ້ນໃຊ້ລະບົບວິເຄາະຍຸດທະສາດອັດຕະໂນມັດ ໂດຍສົ່ງຂໍ້ມູນການເງິນໄປໃຫ້
             generateAutoStrategy(netBalance, thisMonthIncome, thisMonthExpense);
         }
 
@@ -886,6 +937,7 @@
                     }
 
                     sortTableByDateDescending(type);
+                    filterTable(type); // ອັບເດດຕົວກອງຫຼັງຈາກເພີ່ມຂໍ້ມູນ
                     saveDataToFirebase(type);
 
                     customAlert('ສຳເລັດ', `ເພີ່ມຂໍ້ມູນໃໝ່ສຳເລັດ: ${importedCount} ລາຍການ\n(ຂ້າມຂໍ້ມູນທີ່ຊ້ຳກັນ: ${duplicateCount} ລາຍການ)`, 'alert');
@@ -1042,10 +1094,12 @@
                 if (type === 'import') {
                     addRowToTable(parsedData);
                     sortTableByDateDescending('import'); 
+                    filterTable('import');
                     saveDataToFirebase('import'); 
                 } else {
                     addRowToTableExport(parsedData);
                     sortTableByDateDescending('export'); 
+                    filterTable('export');
                     saveDataToFirebase('export'); 
                 }
                 
@@ -1079,7 +1133,6 @@
                 <td class="admin-cell"><input type="checkbox" class="row-checkbox"></td>
             `;
             tableBody.appendChild(newRow);
-            updateTotalSum();
         }
 
         function addRowToTableExport(data) {
@@ -1097,38 +1150,58 @@
                 <td class="admin-cell"><input type="checkbox" class="row-checkbox"></td>
             `;
             tableBody.appendChild(newRow);
-            updateTotalSumExport();
         }
 
         function updateTotalSum() {
             let sum = 0;
-            document.querySelectorAll('#import table tbody .item-total').forEach(cell => {
-                sum += parseFloat(cell.innerText.replace(/,/g, '')) || 0;
+            // ຄິດໄລ່ສະເພາະແຖວທີ່ກຳລັງສະແດງຜົນ (ບໍ່ຖືກເຊື່ອງຈາກ Filter)
+            document.querySelectorAll('#import table tbody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cell = row.querySelector('.item-total');
+                    if (cell) {
+                        sum += parseFloat(cell.innerText.replace(/,/g, '')) || 0;
+                    }
+                }
             });
             document.getElementById('grandTotal').innerText = sum.toLocaleString() + ' ກີບ';
-            updateDashboard();
+            updateDashboard(); // ໃຫ້ Dashboard ອັບເດດຍອດລວມທັງໝົດ
         }
 
         function updateTotalSumExport() {
             let sum = 0;
-            document.querySelectorAll('#export table tbody .item-total-export').forEach(cell => {
-                sum += parseFloat(cell.innerText.replace(/,/g, '')) || 0;
+            // ຄິດໄລ່ສະເພາະແຖວທີ່ກຳລັງສະແດງຜົນ (ບໍ່ຖືກເຊື່ອງຈາກ Filter)
+            document.querySelectorAll('#export table tbody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cell = row.querySelector('.item-total-export');
+                    if (cell) {
+                        sum += parseFloat(cell.innerText.replace(/,/g, '')) || 0;
+                    }
+                }
             });
             document.getElementById('grandTotalExport').innerText = sum.toLocaleString() + ' ກີບ';
-            updateDashboard();
+            updateDashboard(); // ໃຫ້ Dashboard ອັບເດດຍອດລວມທັງໝົດ
         }
 
         function toggleAllCheckboxes(type) {
             const masterCheckbox = document.getElementById(type === 'import' ? 'selectAllImport' : 'selectAllExport');
-            const checkboxes = document.querySelectorAll(`#${type}TableBody .row-checkbox`);
-            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
+            const tbody = document.getElementById(tableBodyId);
+            
+            // ຕິກເລືອກສະເພາະແຖວທີ່ກຳລັງສະແດງຜົນ
+            const checkboxes = tbody.querySelectorAll('tr');
+            checkboxes.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cb = row.querySelector('.row-checkbox');
+                    if (cb) cb.checked = masterCheckbox.checked;
+                }
+            });
         }
 
         function deleteData(type) {
             const tableBodyId = type === 'import' ? 'importTableBody' : 'exportTableBody';
             const tableBody = document.getElementById(tableBodyId);
-            const allCheckboxes = tableBody.querySelectorAll('.row-checkbox');
-            const selectedCheckboxes = tableBody.querySelectorAll('.row-checkbox:checked');
+            const selectedCheckboxes = Array.from(tableBody.querySelectorAll('.row-checkbox:checked'))
+                                         .filter(cb => cb.closest('tr').style.display !== 'none');
             const masterCheckbox = document.getElementById(type === 'import' ? 'selectAllImport' : 'selectAllExport');
             
             if (selectedCheckboxes.length === 0) {
@@ -1136,10 +1209,7 @@
                 return;
             }
 
-            const isDeleteAll = selectedCheckboxes.length === allCheckboxes.length;
-            const confirmMsg = isDeleteAll 
-                ? 'ທ່ານຕ້ອງການລຶບຂໍ້ມູນທັງໝົດແທ້ບໍ? (ບໍ່ສາມາດກູ້ຄືນໄດ້)' 
-                : `ທ່ານຕ້ອງການລຶບ ${selectedCheckboxes.length} ລາຍການທີ່ເລືອກແທ້ບໍ?`;
+            const confirmMsg = `ທ່ານຕ້ອງການລຶບ ${selectedCheckboxes.length} ລາຍການທີ່ເລືອກແທ້ບໍ?`;
 
             customAlert('ຢືນຢັນການລຶບ', confirmMsg, 'confirm', function() {
                 selectedCheckboxes.forEach(cb => { cb.closest('tr').remove(); });
@@ -1157,9 +1227,16 @@
             });
         }
 
+        // ຈັດລຳດັບ (ລ/ດ) ໃໝ່ສະເພາະແຖວທີ່ກຳລັງສະແດງຜົນຢູ່
         function reindexRows(tableBodyId) {
             const rows = document.getElementById(tableBodyId).querySelectorAll('tr');
-            rows.forEach((row, index) => { row.querySelector('.row-index').innerText = index + 1; });
+            let index = 1;
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const indexCell = row.querySelector('.row-index');
+                    if (indexCell) indexCell.innerText = index++;
+                }
+            });
         }
         
         function uncheckAllBoxes() {
@@ -1384,10 +1461,8 @@
             const dateParts = dateInput.split('-');
             const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
             
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const finalDateStr = `${formattedDate} ${hours}:${minutes}`;
+            // ໃຊ້ສະເພາະວັນທີທີ່ຖືກຈັດຮູບແບບແລ້ວ (ຕັດເວລາອອກ)
+            const finalDateStr = formattedDate;
 
             const parsedData = {
                 date: finalDateStr, 
@@ -1405,10 +1480,12 @@
             if (type === 'income') {
                 addRowToTableExport(parsedData);
                 sortTableByDateDescending('export');
+                filterTable('export');
                 saveDataToFirebase('export'); 
             } else {
                 addRowToTable(parsedData);
                 sortTableByDateDescending('import');
+                filterTable('import');
                 saveDataToFirebase('import'); 
             }
 
